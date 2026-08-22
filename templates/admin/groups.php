@@ -34,6 +34,12 @@ $escape = static function (mixed $value): string {
     </p>
 <?php endif; ?>
 
+<?php if ($updated): ?>
+    <p>
+        Die Gruppe wurde aktualisiert.
+    </p>
+<?php endif; ?>
+
 <p>
     <a href="/admin/groups/create.php">
         Neue Gruppe erstellen
@@ -59,6 +65,7 @@ $escape = static function (mixed $value): string {
                 <th>Besucher</th>
                 <th>2. Woche ganz</th>
                 <th>Abreise Woche 2 ½</th>
+                <th>Aktionen</th>
             </tr>
         </thead>
 
@@ -111,6 +118,14 @@ $escape = static function (mixed $value): string {
                     <?= $escape(
                         $group['participants_week2_departure_half']
                     ) ?>
+                </td>
+
+                <td>
+                    <a
+                        href="/admin/groups/edit.php?id=<?= (int) $group['id'] ?>"
+                    >
+                        Bearbeiten
+                    </a>
                 </td>
             </tr>
 
