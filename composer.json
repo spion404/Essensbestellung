@@ -1,0 +1,15 @@
+{
+    "name": "spion404/essensbestellung",
+    "description": "Webanwendung zur Verwaltung von Essensbestellungen für Pfadilager",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "ext-pdo": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+}
