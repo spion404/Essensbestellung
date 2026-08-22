@@ -103,8 +103,42 @@ final class ProductRepository
         return $product;
     }
 
-    public function findCategoryIds(int $productId): array
-    {
+    public function articleNumberExists(
+        string $articleNumber,
+        ?int $excludeId = null
+    ): bool {
+        if ($excludeId === null) {
+            $statement = $this->pdo->prepare(
+                'SELECT 1
+                FROM products
+                WHERE article_number = :article_number
+                LIMIT 1'
+            );
+
+            $statement->execute([
+                'article_number' => $articleNumber,
+            ]);
+        } else {
+            $statement = $this->pdo->prepare(
+                'SELECT 1
+                FROM products
+                WHERE article_number = :article_number
+                AND id <> :exclude_id
+                LIMIT 1'
+            );
+
+            $statement->execute([
+                'article_number' => $articleNumber,
+                'exclude_id' => $excludeId,
+            ]);
+        }
+
+        return $statement->fetchColumn() !== false;
+    }
+
+    public function findCategoryIds(
+        int $productId
+    ): array {
         $statement = $this->pdo->prepare(
             'SELECT category_id
             FROM product_categories
@@ -118,7 +152,9 @@ final class ProductRepository
 
         return array_map(
             'intval',
-            $statement->fetchAll(PDO::FETCH_COLUMN)
+            $statement->fetchAll(
+                PDO::FETCH_COLUMN
+            )
         );
     }
 
@@ -155,7 +191,8 @@ final class ProductRepository
             );
 
             $statement->execute([
-                'article_number' => $articleNumber,
+                'article_number' =>
+                    $articleNumber,
                 'name' => $name,
                 'unit' => $unit,
                 'price' => $price,
@@ -163,7 +200,8 @@ final class ProductRepository
             ]);
 
             $productId =
-                (int) $this->pdo->lastInsertId();
+                (int) $this->pdo
+                    ->lastInsertId();
 
             $this->replaceCategories(
                 $productId,
@@ -193,7 +231,8 @@ final class ProductRepository
         ?string $unit,
         string $price,
         ?string $remark,
-        array $categoryIds
+        array $categoryIds,
+        ?string $articleNumber = null
     ): void {
         $ownsTransaction =
             !$this->pdo->inTransaction();
@@ -206,6 +245,7 @@ final class ProductRepository
             $statement = $this->pdo->prepare(
                 'UPDATE products
                 SET
+                    article_number = :article_number,
                     name = :name,
                     unit = :unit,
                     price = :price,
@@ -214,6 +254,8 @@ final class ProductRepository
             );
 
             $statement->execute([
+                'article_number' =>
+                    $articleNumber,
                 'name' => $name,
                 'unit' => $unit,
                 'price' => $price,
@@ -249,9 +291,10 @@ final class ProductRepository
         ?string $remark,
         array $categoryIds
     ): void {
-        $product = $this->findByArticleNumber(
-            $articleNumber
-        );
+        $product =
+            $this->findByArticleNumber(
+                $articleNumber
+            );
 
         if ($product === null) {
             throw new \RuntimeException(
@@ -267,7 +310,8 @@ final class ProductRepository
             $unit,
             $price,
             $remark,
-            $categoryIds
+            $categoryIds,
+            $articleNumber
         );
     }
 
@@ -300,10 +344,11 @@ final class ProductRepository
         int $productId,
         array $categoryIds
     ): void {
-        $deleteStatement = $this->pdo->prepare(
-            'DELETE FROM product_categories
-            WHERE product_id = :product_id'
-        );
+        $deleteStatement =
+            $this->pdo->prepare(
+                'DELETE FROM product_categories
+                WHERE product_id = :product_id'
+            );
 
         $deleteStatement->execute([
             'product_id' => $productId,
@@ -313,17 +358,20 @@ final class ProductRepository
             return;
         }
 
-        $insertStatement = $this->pdo->prepare(
-            'INSERT INTO product_categories (
-                product_id,
-                category_id
-            ) VALUES (
-                :product_id,
-                :category_id
-            )'
-        );
+        $insertStatement =
+            $this->pdo->prepare(
+                'INSERT INTO product_categories (
+                    product_id,
+                    category_id
+                ) VALUES (
+                    :product_id,
+                    :category_id
+                )'
+            );
 
-        foreach ($categoryIds as $categoryId) {
+        foreach (
+            $categoryIds as $categoryId
+        ) {
             $insertStatement->execute([
                 'product_id' => $productId,
                 'category_id' => $categoryId,

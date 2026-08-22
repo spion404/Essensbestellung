@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-$escape = static function (mixed $value): string {
+$escape = static function (
+    mixed $value
+): string {
     return htmlspecialchars(
         (string) $value,
         ENT_QUOTES,
@@ -12,13 +14,22 @@ $escape = static function (mixed $value): string {
 
 $fieldError = static function (
     string $field
-) use ($errors, $escape): string {
-    if (!isset($errors[$field])) {
+) use (
+    $errors,
+    $escape
+): string {
+    if (
+        !isset(
+            $errors[$field]
+        )
+    ) {
         return '';
     }
 
     return '<p>'
-        . $escape($errors[$field])
+        . $escape(
+            $errors[$field]
+        )
         . '</p>';
 };
 
@@ -49,6 +60,36 @@ $fieldError = static function (
 <form method="post">
 
     <p>
+        <label for="article_number">
+            Artikelnummer
+        </label>
+        <br>
+
+        <input
+            type="text"
+            id="article_number"
+            name="article_number"
+            maxlength="100"
+            value="<?= $escape(
+                $form['article_number']
+            ) ?>"
+        >
+
+        <br>
+
+        <small>
+            Optional bei manueller
+            Erfassung. Beim XLSX-Import
+            ist die Artikelnummer
+            erforderlich.
+        </small>
+
+        <?= $fieldError(
+            'article_number'
+        ) ?>
+    </p>
+
+    <p>
         <label for="name">
             Produktname
         </label>
@@ -59,7 +100,9 @@ $fieldError = static function (
             id="name"
             name="name"
             maxlength="200"
-            value="<?= $escape($form['name']) ?>"
+            value="<?= $escape(
+                $form['name']
+            ) ?>"
             required
         >
 
@@ -77,7 +120,9 @@ $fieldError = static function (
             id="unit"
             name="unit"
             maxlength="50"
-            value="<?= $escape($form['unit']) ?>"
+            value="<?= $escape(
+                $form['unit']
+            ) ?>"
         >
 
         <?= $fieldError('unit') ?>
@@ -95,7 +140,9 @@ $fieldError = static function (
             name="price"
             inputmode="decimal"
             placeholder="0.00"
-            value="<?= $escape($form['price']) ?>"
+            value="<?= $escape(
+                $form['price']
+            ) ?>"
             required
         >
 
@@ -113,43 +160,56 @@ $fieldError = static function (
             name="remark"
             rows="4"
             cols="50"
-        ><?= $escape($form['remark']) ?></textarea>
+        ><?= $escape(
+            $form['remark']
+        ) ?></textarea>
     </p>
 
     <fieldset>
-        <legend>
-            Kategorien
-        </legend>
+        <legend>Kategorien</legend>
 
-        <?php if ($categories === []): ?>
+        <?php if (
+            $categories === []
+        ): ?>
 
             <p>
-                Es wurden noch keine Kategorien erstellt.
+                Es wurden noch keine
+                Kategorien erstellt.
             </p>
 
             <p>
-                Das Produkt kann trotzdem ohne Kategorie
-                gespeichert werden.
+                Das Produkt kann trotzdem
+                ohne Kategorie gespeichert
+                werden.
             </p>
 
             <p>
-                <a href="/admin/categories/create.php">
+                <a
+                    href="/admin/categories/create.php"
+                >
                     Kategorie erstellen
                 </a>
             </p>
 
         <?php else: ?>
 
-            <?php foreach ($categories as $category): ?>
+            <?php foreach (
+                $categories
+                as $category
+            ): ?>
 
                 <?php
-                $categoryId = (int) $category['id'];
+                $categoryId =
+                    (int) $category['id'];
 
-                $checked = in_array(
-                    $categoryId,
-                    $form['category_ids'],
-                    true
-                );
+                $checked =
+                    in_array(
+                        $categoryId,
+                        $form[
+                            'category_ids'
+                        ],
+                        true
+                    );
                 ?>
 
                 <p>
@@ -158,10 +218,15 @@ $fieldError = static function (
                             type="checkbox"
                             name="category_ids[]"
                             value="<?= $categoryId ?>"
-                            <?= $checked ? 'checked' : '' ?>
+                            <?= $checked
+                                ? 'checked'
+                                : ''
+                            ?>
                         >
 
-                        <?= $escape($category['name']) ?>
+                        <?= $escape(
+                            $category['name']
+                        ) ?>
                     </label>
                 </p>
 
@@ -169,7 +234,9 @@ $fieldError = static function (
 
         <?php endif; ?>
 
-        <?= $fieldError('categories') ?>
+        <?= $fieldError(
+            'categories'
+        ) ?>
 
     </fieldset>
 

@@ -25,30 +25,48 @@ $updated =
 $deleted =
     isset($_GET['deleted']);
 
-$importCreatedValue = (string) (
-    $_GET['import_created'] ?? ''
-);
+$importCreatedValue =
+    (string) (
+        $_GET[
+            'import_created'
+        ]
+        ?? ''
+    );
 
-$importUpdatedValue = (string) (
-    $_GET['import_updated'] ?? ''
-);
+$importUpdatedValue =
+    (string) (
+        $_GET[
+            'import_updated'
+        ]
+        ?? ''
+    );
 
-$importDeletedValue = (string) (
-    $_GET['import_deleted'] ?? ''
-);
+$importDeletedValue =
+    (string) (
+        $_GET[
+            'import_deleted'
+        ]
+        ?? ''
+    );
 
 $importCreated =
-    ctype_digit($importCreatedValue)
+    ctype_digit(
+        $importCreatedValue
+    )
         ? (int) $importCreatedValue
         : null;
 
 $importUpdated =
-    ctype_digit($importUpdatedValue)
+    ctype_digit(
+        $importUpdatedValue
+    )
         ? (int) $importUpdatedValue
         : null;
 
 $importDeleted =
-    ctype_digit($importDeletedValue)
+    ctype_digit(
+        $importDeletedValue
+    )
         ? (int) $importDeletedValue
         : null;
 

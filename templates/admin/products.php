@@ -51,7 +51,8 @@ $escape = static function (
 <?php if ($importCompleted): ?>
 
     <p>
-        Der Produktimport wurde abgeschlossen.
+        Der Produktimport wurde
+        abgeschlossen.
     </p>
 
     <ul>
@@ -88,7 +89,8 @@ $escape = static function (
 <?php if ($products === []): ?>
 
     <p>
-        Es wurden noch keine Produkte erfasst.
+        Es wurden noch keine Produkte
+        erfasst.
     </p>
 
 <?php else: ?>
@@ -109,16 +111,19 @@ $escape = static function (
         <tbody>
 
         <?php foreach (
-            $products as $product
+            $products
+            as $product
         ): ?>
 
             <tr>
                 <td>
                     <?php if (
-                        $product['article_number']
-                        === null
-                        || $product['article_number']
-                        === ''
+                        $product[
+                            'article_number'
+                        ] === null
+                        || $product[
+                            'article_number'
+                        ] === ''
                     ): ?>
                         –
                     <?php else: ?>
@@ -138,8 +143,10 @@ $escape = static function (
 
                 <td>
                     <?php if (
-                        $product['unit'] === null
-                        || $product['unit'] === ''
+                        $product['unit']
+                        === null
+                        || $product['unit']
+                        === ''
                     ): ?>
                         –
                     <?php else: ?>
@@ -151,7 +158,9 @@ $escape = static function (
 
                 <td>
                     <?= number_format(
-                        (float) $product['price'],
+                        (float) $product[
+                            'price'
+                        ],
                         2,
                         '.',
                         ''
@@ -160,8 +169,9 @@ $escape = static function (
 
                 <td>
                     <?php if (
-                        $product['categories']
-                        === null
+                        $product[
+                            'categories'
+                        ] === null
                     ): ?>
                         –
                     <?php else: ?>

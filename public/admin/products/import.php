@@ -21,11 +21,12 @@ $productRepository =
 $categoryRepository =
     new CategoryRepository($pdo);
 
-$importService = new ProductImportService(
-    $pdo,
-    $productRepository,
-    $categoryRepository
-);
+$importService =
+    new ProductImportService(
+        $pdo,
+        $productRepository,
+        $categoryRepository
+    );
 
 $errors = [];
 
@@ -35,16 +36,26 @@ $debug = filter_var(
 );
 
 $preview =
-    $_SESSION['product_import_preview']
+    $_SESSION[
+        'product_import_preview'
+    ]
     ?? null;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = (string) (
-        $_POST['action'] ?? ''
-    );
+$selectedMode =
+    $preview['mode']
+    ?? ProductImportService::MODE_MERGE;
+
+if (
+    $_SERVER['REQUEST_METHOD']
+    === 'POST'
+) {
+    $action =
+        (string) (
+            $_POST['action'] ?? ''
+        );
 
     /*
-     * XLSX prüfen und Vorschau erzeugen.
+     * Neue Datei prüfen.
      */
     if ($action === 'preview') {
         unset(
@@ -55,14 +66,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $preview = null;
 
-        $mode = (string) (
-            $_POST['mode']
-            ?? ProductImportService::MODE_MERGE
-        );
+        $selectedMode =
+            (string) (
+                $_POST['mode']
+                ?? ProductImportService::MODE_MERGE
+            );
 
         if (
             !in_array(
-                $mode,
+                $selectedMode,
                 [
                     ProductImportService::MODE_MERGE,
                     ProductImportService::MODE_REPLACE,
@@ -77,10 +89,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (
             !isset($_FILES['xlsx'])
-            || !is_array($_FILES['xlsx'])
+            || !is_array(
+                $_FILES['xlsx']
+            )
         ) {
             $errors[] =
-                'Bitte eine XLSX-Datei auswählen.';
+                'Bitte eine XLSX-Datei '
+                . 'auswählen.';
         } elseif (
             $_FILES['xlsx']['error']
             !== UPLOAD_ERR_OK
@@ -93,21 +108,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             > 5 * 1024 * 1024
         ) {
             $errors[] =
-                'Die XLSX-Datei darf maximal '
-                . '5 MB gross sein.';
+                'Die XLSX-Datei darf '
+                . 'maximal 5 MB gross sein.';
         }
 
         if ($errors === []) {
-            $originalName = basename(
-                (string) $_FILES['xlsx']['name']
-            );
+            $originalName =
+                basename(
+                    (string) $_FILES[
+                        'xlsx'
+                    ]['name']
+                );
 
-            $extension = strtolower(
-                pathinfo(
-                    $originalName,
-                    PATHINFO_EXTENSION
-                )
-            );
+            $extension =
+                strtolower(
+                    pathinfo(
+                        $originalName,
+                        PATHINFO_EXTENSION
+                    )
+                );
 
             if ($extension !== 'xlsx') {
                 $errors[] =
@@ -126,12 +145,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $result['errors']
                         !== []
                     ) {
-                        $errors = array_merge(
-                            $errors,
-                            $result['errors']
-                        );
+                        $errors =
+                            array_merge(
+                                $errors,
+                                $result[
+                                    'errors'
+                                ]
+                            );
                     } elseif (
-                        $result['rows'] === []
+                        $result['rows']
+                        === []
                     ) {
                         $errors[] =
                             'Die XLSX-Datei '
@@ -142,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'file_name' =>
                                 $originalName,
                             'mode' =>
-                                $mode,
+                                $selectedMode,
                             'rows' =>
                                 $result['rows'],
                         ];
@@ -151,29 +174,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'product_import_preview'
                         ] = $preview;
                     }
-                } catch (Throwable $exception) {
+                } catch (
+                    Throwable $exception
+                ) {
                     error_log(
                         sprintf(
                             'XLSX preview failed: '
                             . '%s: %s in %s:%d',
                             $exception::class,
-                            $exception->getMessage(),
-                            $exception->getFile(),
-                            $exception->getLine()
+                            $exception
+                                ->getMessage(),
+                            $exception
+                                ->getFile(),
+                            $exception
+                                ->getLine()
                         )
                     );
 
                     $errors[] =
-                        'Die XLSX-Datei konnte '
-                        . 'nicht gelesen werden.';
+                        'Die XLSX-Datei '
+                        . 'konnte nicht gelesen '
+                        . 'werden.';
 
                     if ($debug) {
-                        $errors[] = sprintf(
-                            'Technischer Fehler: '
-                            . '%s: %s',
-                            $exception::class,
-                            $exception->getMessage()
-                        );
+                        $errors[] =
+                            sprintf(
+                                'Technischer '
+                                . 'Fehler: '
+                                . '%s: %s',
+                                $exception::class,
+                                $exception
+                                    ->getMessage()
+                            );
                     }
                 }
             }
@@ -181,7 +213,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     /*
-     * Vorschau endgültig importieren.
+     * Vorschau importieren.
      */
     if ($action === 'import') {
         $preview =
@@ -192,16 +224,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($preview === null) {
             $errors[] =
-                'Es ist keine Importvorschau '
-                . 'vorhanden.';
+                'Es ist keine '
+                . 'Importvorschau vorhanden.';
         } else {
+            $selectedMode =
+                $preview['mode'];
+
             $hasRowErrors = false;
 
             foreach (
                 $preview['rows']
                 as $row
             ) {
-                if ($row['errors'] !== []) {
+                if (
+                    $row['errors']
+                    !== []
+                ) {
                     $hasRowErrors = true;
                     break;
                 }
@@ -210,16 +248,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($hasRowErrors) {
                 $errors[] =
                     'Die Datei enthält '
-                    . 'fehlerhafte Zeilen und '
-                    . 'kann noch nicht '
+                    . 'fehlerhafte Zeilen '
+                    . 'und kann noch nicht '
                     . 'importiert werden.';
             } else {
                 try {
                     $result =
-                        $importService->import(
-                            $preview['rows'],
-                            $preview['mode']
-                        );
+                        $importService
+                            ->import(
+                                $preview[
+                                    'rows'
+                                ],
+                                $preview[
+                                    'mode'
+                                ]
+                            );
 
                     unset(
                         $_SESSION[
@@ -227,14 +270,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ]
                     );
 
-                    $query = http_build_query([
-                        'import_created' =>
-                            $result['created'],
-                        'import_updated' =>
-                            $result['updated'],
-                        'import_deleted' =>
-                            $result['deleted'],
-                    ]);
+                    $query =
+                        http_build_query([
+                            'import_created' =>
+                                $result[
+                                    'created'
+                                ],
+                            'import_updated' =>
+                                $result[
+                                    'updated'
+                                ],
+                            'import_deleted' =>
+                                $result[
+                                    'deleted'
+                                ],
+                        ]);
 
                     header(
                         'Location: '
@@ -243,29 +293,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
 
                     exit;
-                } catch (Throwable $exception) {
+                } catch (
+                    Throwable $exception
+                ) {
                     error_log(
                         sprintf(
                             'XLSX import failed: '
                             . '%s: %s in %s:%d',
                             $exception::class,
-                            $exception->getMessage(),
-                            $exception->getFile(),
-                            $exception->getLine()
+                            $exception
+                                ->getMessage(),
+                            $exception
+                                ->getFile(),
+                            $exception
+                                ->getLine()
                         )
                     );
 
                     $errors[] =
-                        'Der Import konnte nicht '
-                        . 'abgeschlossen werden.';
+                        'Der Import konnte '
+                        . 'nicht abgeschlossen '
+                        . 'werden.';
 
                     if ($debug) {
-                        $errors[] = sprintf(
-                            'Technischer Fehler: '
-                            . '%s: %s',
-                            $exception::class,
-                            $exception->getMessage()
-                        );
+                        $errors[] =
+                            sprintf(
+                                'Technischer '
+                                . 'Fehler: '
+                                . '%s: %s',
+                                $exception::class,
+                                $exception
+                                    ->getMessage()
+                            );
                     }
                 }
             }

@@ -8,6 +8,7 @@ use App\Repository\CategoryRepository;
 use App\Repository\ProductRepository;
 use PDO;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Throwable;
 
 final class ProductImportService
@@ -22,20 +23,26 @@ final class ProductImportService
     ) {
     }
 
-    public function read(string $filePath): array
-    {
-        $reader = IOFactory::createReader('Xlsx');
+    public function read(
+        string $filePath
+    ): array {
+        $reader =
+            IOFactory::createReader('Xlsx');
 
         $reader->setReadDataOnly(true);
 
-        $spreadsheet = $reader->load($filePath);
+        $spreadsheet =
+            $reader->load($filePath);
 
         try {
-            $sheet = $spreadsheet->getActiveSheet();
+            $sheet =
+                $spreadsheet
+                    ->getActiveSheet();
 
-            $fileErrors = $this->validateHeaders(
-                $sheet
-            );
+            $fileErrors =
+                $this->validateHeaders(
+                    $sheet
+                );
 
             if ($fileErrors !== []) {
                 return [
@@ -57,42 +64,54 @@ final class ProductImportService
             ) {
                 $articleNumber = trim(
                     (string) $sheet
-                        ->getCell('A' . $rowNumber)
+                        ->getCell(
+                            'A' . $rowNumber
+                        )
                         ->getFormattedValue()
                 );
 
                 $name = trim(
                     (string) $sheet
-                        ->getCell('B' . $rowNumber)
+                        ->getCell(
+                            'B' . $rowNumber
+                        )
                         ->getValue()
                 );
 
                 $unit = trim(
                     (string) $sheet
-                        ->getCell('C' . $rowNumber)
+                        ->getCell(
+                            'C' . $rowNumber
+                        )
                         ->getValue()
                 );
 
                 $priceInput = trim(
                     (string) $sheet
-                        ->getCell('D' . $rowNumber)
+                        ->getCell(
+                            'D' . $rowNumber
+                        )
                         ->getValue()
                 );
 
                 $categoriesInput = trim(
                     (string) $sheet
-                        ->getCell('E' . $rowNumber)
+                        ->getCell(
+                            'E' . $rowNumber
+                        )
                         ->getValue()
                 );
 
                 $remark = trim(
                     (string) $sheet
-                        ->getCell('F' . $rowNumber)
+                        ->getCell(
+                            'F' . $rowNumber
+                        )
                         ->getValue()
                 );
 
                 /*
-                 * Komplett leere Zeilen überspringen.
+                 * Komplett leere Zeilen ignorieren.
                  */
                 if (
                     $articleNumber === ''
@@ -108,13 +127,15 @@ final class ProductImportService
                 $errors = [];
 
                 /*
-                 * Artikelnummer validieren.
+                 * Artikelnummer
                  */
                 if ($articleNumber === '') {
                     $errors[] =
                         'Artikelnummer fehlt.';
                 } elseif (
-                    mb_strlen($articleNumber) > 100
+                    mb_strlen(
+                        $articleNumber
+                    ) > 100
                 ) {
                     $errors[] =
                         'Artikelnummer ist länger '
@@ -135,7 +156,8 @@ final class ProductImportService
                     ) {
                         $errors[] =
                             'Artikelnummer kommt '
-                            . 'mehrfach in der Datei vor.';
+                            . 'mehrfach in der '
+                            . 'Datei vor.';
                     } else {
                         $seenArticleNumbers[
                             $articleNumberKey
@@ -144,32 +166,37 @@ final class ProductImportService
                 }
 
                 /*
-                 * Produktname validieren.
+                 * Produktname
                  */
                 if ($name === '') {
                     $errors[] =
                         'Produktname fehlt.';
-                } elseif (mb_strlen($name) > 200) {
+                } elseif (
+                    mb_strlen($name) > 200
+                ) {
                     $errors[] =
                         'Produktname ist länger '
                         . 'als 200 Zeichen.';
                 }
 
                 /*
-                 * Einheit validieren.
+                 * Einheit
                  */
-                if (mb_strlen($unit) > 50) {
+                if (
+                    mb_strlen($unit) > 50
+                ) {
                     $errors[] =
                         'Einheit ist länger '
                         . 'als 50 Zeichen.';
                 }
 
                 /*
-                 * Preis validieren.
+                 * Preis
                  */
-                $price = $this->normalizePrice(
-                    $priceInput
-                );
+                $price =
+                    $this->normalizePrice(
+                        $priceInput
+                    );
 
                 if ($price === null) {
                     $errors[] =
@@ -177,7 +204,7 @@ final class ProductImportService
                 }
 
                 /*
-                 * Kategorien verarbeiten.
+                 * Kategorien
                  */
                 $categories =
                     $this->parseCategories(
@@ -189,7 +216,9 @@ final class ProductImportService
                     as $category
                 ) {
                     if (
-                        mb_strlen($category) > 100
+                        mb_strlen(
+                            $category
+                        ) > 100
                     ) {
                         $errors[] =
                             'Kategorie "'
@@ -206,9 +235,11 @@ final class ProductImportService
                     'name' => $name,
                     'unit' => $unit,
                     'price' =>
-                        $price ?? $priceInput,
+                        $price
+                        ?? $priceInput,
                     'remark' => $remark,
-                    'categories' => $categories,
+                    'categories' =>
+                        $categories,
                     'errors' => $errors,
                 ];
             }
@@ -218,7 +249,8 @@ final class ProductImportService
                 'errors' => [],
             ];
         } finally {
-            $spreadsheet->disconnectWorksheets();
+            $spreadsheet
+                ->disconnectWorksheets();
         }
     }
 
@@ -243,17 +275,19 @@ final class ProductImportService
 
         if ($this->pdo->inTransaction()) {
             throw new \LogicException(
-                'Der Import kann nicht innerhalb '
-                . 'einer bereits laufenden '
-                . 'Transaktion gestartet werden.'
+                'Der Import kann nicht '
+                . 'innerhalb einer bereits '
+                . 'laufenden Transaktion '
+                . 'gestartet werden.'
             );
         }
 
         foreach ($rows as $row) {
             if ($row['errors'] !== []) {
                 throw new \LogicException(
-                    'Ein Import mit fehlerhaften '
-                    . 'Zeilen ist nicht erlaubt.'
+                    'Ein Import mit '
+                    . 'fehlerhaften Zeilen '
+                    . 'ist nicht erlaubt.'
                 );
             }
         }
@@ -265,7 +299,10 @@ final class ProductImportService
             $updated = 0;
             $deleted = 0;
 
-            if ($mode === self::MODE_REPLACE) {
+            if (
+                $mode
+                === self::MODE_REPLACE
+            ) {
                 $deleted =
                     $this->productRepository
                         ->deleteAll();
@@ -279,22 +316,31 @@ final class ProductImportService
                     as $categoryName
                 ) {
                     $categoryIds[] =
-                        $this->categoryRepository
+                        $this
+                            ->categoryRepository
                             ->findOrCreateId(
                                 $categoryName
                             );
                 }
 
                 if (
-                    $mode === self::MODE_MERGE
-                    && $this->productRepository
+                    $mode
+                    === self::MODE_MERGE
+                    && $this
+                        ->productRepository
                         ->findByArticleNumber(
-                            $row['article_number']
-                        ) !== null
+                            $row[
+                                'article_number'
+                            ]
+                        )
+                        !== null
                 ) {
-                    $this->productRepository
+                    $this
+                        ->productRepository
                         ->updateByArticleNumber(
-                            $row['article_number'],
+                            $row[
+                                'article_number'
+                            ],
                             $row['name'],
                             $row['unit'] !== ''
                                 ? $row['unit']
@@ -311,18 +357,22 @@ final class ProductImportService
                     continue;
                 }
 
-                $this->productRepository->create(
-                    $row['name'],
-                    $row['unit'] !== ''
-                        ? $row['unit']
-                        : null,
-                    $row['price'],
-                    $row['remark'] !== ''
-                        ? $row['remark']
-                        : null,
-                    $categoryIds,
-                    $row['article_number']
-                );
+                $this
+                    ->productRepository
+                    ->create(
+                        $row['name'],
+                        $row['unit'] !== ''
+                            ? $row['unit']
+                            : null,
+                        $row['price'],
+                        $row['remark'] !== ''
+                            ? $row['remark']
+                            : null,
+                        $categoryIds,
+                        $row[
+                            'article_number'
+                        ]
+                    );
 
                 $created++;
             }
@@ -335,7 +385,9 @@ final class ProductImportService
                 'deleted' => $deleted,
             ];
         } catch (Throwable $exception) {
-            if ($this->pdo->inTransaction()) {
+            if (
+                $this->pdo->inTransaction()
+            ) {
                 $this->pdo->rollBack();
             }
 
@@ -344,7 +396,7 @@ final class ProductImportService
     }
 
     private function validateHeaders(
-        object $sheet
+        Worksheet $sheet
     ): array {
         $expectedHeaders = [
             'A' => 'artikelnummer',
@@ -361,14 +413,17 @@ final class ProductImportService
             $expectedHeaders
             as $column => $expectedHeader
         ) {
-            $actualHeader = mb_strtolower(
-                trim(
-                    (string) $sheet
-                        ->getCell($column . '1')
-                        ->getValue()
-                ),
-                'UTF-8'
-            );
+            $actualHeader =
+                mb_strtolower(
+                    trim(
+                        (string) $sheet
+                            ->getCell(
+                                $column . '1'
+                            )
+                            ->getValue()
+                    ),
+                    'UTF-8'
+                );
 
             if (
                 $actualHeader
@@ -378,7 +433,9 @@ final class ProductImportService
                     'Spalte '
                     . $column
                     . ' muss "'
-                    . ucfirst($expectedHeader)
+                    . ucfirst(
+                        $expectedHeader
+                    )
                     . '" heissen.';
             }
         }
@@ -408,35 +465,41 @@ final class ProductImportService
             return null;
         }
 
-        [$wholePart, $decimalPart] =
-            array_pad(
-                explode(
-                    '.',
-                    $price,
-                    2
-                ),
-                2,
-                ''
-            );
-
-        $wholePart = ltrim(
+        [
             $wholePart,
-            '0'
+            $decimalPart,
+        ] = array_pad(
+            explode(
+                '.',
+                $price,
+                2
+            ),
+            2,
+            ''
         );
+
+        $wholePart =
+            ltrim(
+                $wholePart,
+                '0'
+            );
 
         if ($wholePart === '') {
             $wholePart = '0';
         }
 
-        if (strlen($wholePart) > 8) {
+        if (
+            strlen($wholePart) > 8
+        ) {
             return null;
         }
 
-        $decimalPart = str_pad(
-            $decimalPart,
-            2,
-            '0'
-        );
+        $decimalPart =
+            str_pad(
+                $decimalPart,
+                2,
+                '0'
+            );
 
         return $wholePart
             . '.'
@@ -450,32 +513,34 @@ final class ProductImportService
             return [];
         }
 
-        $parts = explode(
-            ';',
-            $categories
-        );
+        $parts =
+            explode(
+                ';',
+                $categories
+            );
 
         $result = [];
         $seen = [];
 
         foreach ($parts as $part) {
-            $category = trim($part);
+            $category =
+                trim($part);
 
             if ($category === '') {
                 continue;
             }
 
-            $key = mb_strtolower(
-                $category,
-                'UTF-8'
-            );
+            $key =
+                mb_strtolower(
+                    $category,
+                    'UTF-8'
+                );
 
             if (isset($seen[$key])) {
                 continue;
             }
 
             $seen[$key] = true;
-
             $result[] = $category;
         }
 

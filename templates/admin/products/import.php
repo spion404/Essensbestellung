@@ -18,7 +18,10 @@ $validRows = 0;
 $invalidRows = 0;
 
 if ($preview !== null) {
-    foreach ($preview['rows'] as $row) {
+    foreach (
+        $preview['rows']
+        as $row
+    ) {
         if ($row['errors'] === []) {
             $validRows++;
         } else {
@@ -38,7 +41,9 @@ if ($preview !== null) {
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Produkte importieren</title>
+    <title>
+        Produkte importieren
+    </title>
 </head>
 
 <body>
@@ -49,7 +54,17 @@ if ($preview !== null) {
     </a>
 </p>
 
-<h1>Produkte aus XLSX importieren</h1>
+<h1>
+    Produkte aus XLSX importieren
+</h1>
+
+<p>
+    <a
+        href="/admin/products/import-template.php"
+    >
+        XLSX-Vorlage herunterladen
+    </a>
+</p>
 
 <p>
     Die erste Zeile der Datei muss
@@ -88,25 +103,31 @@ if ($preview !== null) {
 <p>
     Beispiel:
     <code>
-        Saucen &amp; Gewürze; Vegetarisch
+        Saucen &amp; Gewürze;
+        Vegetarisch
     </code>
 </p>
 
 <p>
-    Die Artikelnummer sollte in Excel
-    als Text gespeichert werden.
-    Dadurch bleiben auch führende Nullen
-    erhalten.
+    Die Artikelnummer ist beim
+    XLSX-Import erforderlich.
+    Sie sollte in Excel als Text
+    gespeichert werden, damit
+    führende Nullen erhalten bleiben.
 </p>
 
 <?php if ($errors !== []): ?>
 
     <h2>Fehler</h2>
 
-    <?php foreach ($errors as $error): ?>
+    <?php foreach (
+        $errors as $error
+    ): ?>
+
         <p>
             <?= $escape($error) ?>
         </p>
+
     <?php endforeach; ?>
 
 <?php endif; ?>
@@ -124,7 +145,9 @@ if ($preview !== null) {
     >
 
     <fieldset>
-        <legend>Importmodus</legend>
+        <legend>
+            Importmodus
+        </legend>
 
         <p>
             <label>
@@ -132,7 +155,10 @@ if ($preview !== null) {
                     type="radio"
                     name="mode"
                     value="<?= ProductImportService::MODE_MERGE ?>"
-                    checked
+                    <?= $selectedMode === ProductImportService::MODE_MERGE
+                        ? 'checked'
+                        : ''
+                    ?>
                 >
 
                 <strong>
@@ -143,9 +169,11 @@ if ($preview !== null) {
 
         <p>
             Neue Artikelnummern werden
-            hinzugefügt. Bereits vorhandene
-            Artikelnummern werden mit den
-            Daten aus der XLSX aktualisiert.
+            als neue Produkte angelegt.
+            Bereits vorhandene
+            Artikelnummern werden mit
+            den Daten aus der XLSX
+            aktualisiert.
         </p>
 
         <p>
@@ -154,6 +182,10 @@ if ($preview !== null) {
                     type="radio"
                     name="mode"
                     value="<?= ProductImportService::MODE_REPLACE ?>"
+                    <?= $selectedMode === ProductImportService::MODE_REPLACE
+                        ? 'checked'
+                        : ''
+                    ?>
                 >
 
                 <strong>
@@ -163,9 +195,10 @@ if ($preview !== null) {
         </p>
 
         <p>
-            Alle bisherigen Produkte werden
-            entfernt und durch die Produkte
-            aus der XLSX ersetzt.
+            Alle bestehenden Produkte
+            werden entfernt und durch
+            den Inhalt der XLSX-Datei
+            ersetzt.
         </p>
     </fieldset>
 
@@ -226,13 +259,10 @@ if ($preview !== null) {
     ): ?>
 
         <p>
-            <strong>
-                Achtung:
-            </strong>
-
-            Beim Bestätigen werden sämtliche
-            vorhandenen Produkte gelöscht und
-            durch diesen Katalog ersetzt.
+            <strong>Achtung:</strong>
+            Beim Bestätigen werden alle
+            vorhandenen Produkte gelöscht
+            und durch diesen Katalog ersetzt.
         </p>
 
     <?php endif; ?>
@@ -274,7 +304,9 @@ if ($preview !== null) {
 
                 <td>
                     <?= $escape(
-                        $row['article_number']
+                        $row[
+                            'article_number'
+                        ]
                     ) ?>
                 </td>
 
@@ -286,7 +318,9 @@ if ($preview !== null) {
 
                 <td>
                     <?= $row['unit'] !== ''
-                        ? $escape($row['unit'])
+                        ? $escape(
+                            $row['unit']
+                        )
                         : '–'
                     ?>
                 </td>
@@ -299,14 +333,18 @@ if ($preview !== null) {
 
                 <td>
                     <?php if (
-                        $row['categories'] === []
+                        $row[
+                            'categories'
+                        ] === []
                     ): ?>
                         –
                     <?php else: ?>
                         <?= $escape(
                             implode(
                                 ', ',
-                                $row['categories']
+                                $row[
+                                    'categories'
+                                ]
                             )
                         ) ?>
                     <?php endif; ?>
@@ -352,7 +390,9 @@ if ($preview !== null) {
         </tbody>
     </table>
 
-    <?php if ($invalidRows === 0): ?>
+    <?php if (
+        $invalidRows === 0
+    ): ?>
 
         <h2>Import bestätigen</h2>
 
@@ -369,16 +409,19 @@ if ($preview !== null) {
         <?php else: ?>
 
             <p>
-                Bestehende Produkte mit gleicher
-                Artikelnummer werden aktualisiert.
-                Neue Artikelnummern werden ergänzt.
+                Bestehende Produkte mit
+                gleicher Artikelnummer
+                werden aktualisiert.
+                Neue Artikelnummern werden
+                ergänzt.
             </p>
 
         <?php endif; ?>
 
         <p>
-            Noch nicht vorhandene Kategorien
-            werden automatisch angelegt.
+            Noch nicht vorhandene
+            Kategorien werden automatisch
+            angelegt.
         </p>
 
         <form method="post">
@@ -395,12 +438,15 @@ if ($preview !== null) {
 
     <?php else: ?>
 
-        <h2>Import noch nicht möglich</h2>
+        <h2>
+            Import noch nicht möglich
+        </h2>
 
         <p>
-            Korrigiere die markierten Zeilen
-            in der XLSX-Datei und lade sie
-            anschliessend erneut hoch.
+            Korrigiere die markierten
+            Zeilen in der XLSX-Datei und
+            lade sie anschliessend erneut
+            hoch.
         </p>
 
     <?php endif; ?>
