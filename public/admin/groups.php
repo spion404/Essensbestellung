@@ -13,5 +13,7 @@ $groupRepository = new GroupRepository($pdo);
 
 $groups = $groupRepository->findAll();
 
+$created = isset($_GET['created']);
+
 require dirname(__DIR__, 2)
     . '/templates/admin/groups.php';

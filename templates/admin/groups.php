@@ -28,6 +28,18 @@ $escape = static function (mixed $value): string {
 
 <h1>Gruppen</h1>
 
+<?php if ($created): ?>
+    <p>
+        Die Gruppe wurde erstellt.
+    </p>
+<?php endif; ?>
+
+<p>
+    <a href="/admin/groups/create.php">
+        Neue Gruppe erstellen
+    </a>
+</p>
+
 <?php if ($groups === []): ?>
 
     <p>
