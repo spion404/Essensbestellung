@@ -26,7 +26,7 @@ Anforderungen:
 -
 - Apache oder Nginx mit PHP-FPM / mod_php
 - PHP >= 8.3
-- MySQL >= 8.X oder Maria DB >= 10.X
+- MySQL >= 8.4 oder Maria DB >= 10.11
 - UTF-8 / utf8mb4
 - PDO / PDO_MySQL
 - mbstring
