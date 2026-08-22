@@ -22,11 +22,14 @@ Auf jedem gängigen Webhost installierbar:
 
 Anforderungen:
 -
-- Apache oder Nginx mit PHP-FPM/mod_php
+- Apache oder Nginx mit PHP-FPM / mod_php
 - PHP >= 8.3
 - MySQL >= 8.X oder Maria DB >= 10.X
-- PDO/PDO_MySQL
+- UTF-8 / utf8mb4
+- PDO / PDO_MySQL
 - mbstring
 - openssl
 - session
 - json
+
+Falls du das Tool auch für dein Lager benutzen möchtest und Unterstützung brauchst, kannst du dich gerne bei Spion melden.
