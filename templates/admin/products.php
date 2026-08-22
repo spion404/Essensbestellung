@@ -46,9 +46,26 @@ $escape = static function (mixed $value): string {
     </p>
 <?php endif; ?>
 
+<?php if ($imported > 0): ?>
+    <p>
+        <?= $imported ?>
+        <?= $imported === 1
+            ? 'Produkt wurde'
+            : 'Produkte wurden'
+        ?>
+        importiert.
+    </p>
+<?php endif; ?>
+
 <p>
     <a href="/admin/products/create.php">
         Neues Produkt erstellen
+    </a>
+</p>
+
+<p>
+    <a href="/admin/products/import.php">
+        Produkte aus XLSX importieren
     </a>
 </p>
 
