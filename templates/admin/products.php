@@ -34,6 +34,18 @@ $escape = static function (mixed $value): string {
     </p>
 <?php endif; ?>
 
+<?php if ($updated): ?>
+    <p>
+        Das Produkt wurde aktualisiert.
+    </p>
+<?php endif; ?>
+
+<?php if ($deleted): ?>
+    <p>
+        Das Produkt wurde gelöscht.
+    </p>
+<?php endif; ?>
+
 <p>
     <a href="/admin/products/create.php">
         Neues Produkt erstellen
@@ -56,6 +68,7 @@ $escape = static function (mixed $value): string {
                 <th>Preis</th>
                 <th>Kategorien</th>
                 <th>Bemerkung</th>
+                <th>Aktionen</th>
             </tr>
         </thead>
 
@@ -98,6 +111,22 @@ $escape = static function (mixed $value): string {
                     <?php else: ?>
                         <?= $escape($product['remark']) ?>
                     <?php endif; ?>
+                </td>
+
+                <td>
+                    <a
+                        href="/admin/products/edit.php?id=<?= (int) $product['id'] ?>"
+                    >
+                        Bearbeiten
+                    </a>
+
+                    |
+
+                    <a
+                        href="/admin/products/delete.php?id=<?= (int) $product['id'] ?>"
+                    >
+                        Löschen
+                    </a>
                 </td>
             </tr>
 

@@ -14,6 +14,8 @@ $productRepository = new ProductRepository($pdo);
 $products = $productRepository->findAll();
 
 $created = isset($_GET['created']);
+$updated = isset($_GET['updated']);
+$deleted = isset($_GET['deleted']);
 
 require dirname(__DIR__, 2)
     . '/templates/admin/products.php';

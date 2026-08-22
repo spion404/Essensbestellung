@@ -108,4 +108,130 @@ final class ProductRepository
             throw $exception;
         }
     }
+
+    public function findById(int $id): ?array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT
+                id,
+                name,
+                unit,
+                price,
+                remark
+            FROM products
+            WHERE id = :id'
+        );
+
+        $statement->execute([
+            'id' => $id,
+        ]);
+
+        $product = $statement->fetch();
+
+        if ($product === false) {
+            return null;
+        }
+
+        return $product;
+    }
+
+    public function findCategoryIds(int $productId): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT category_id
+            FROM product_categories
+            WHERE product_id = :product_id
+            ORDER BY category_id ASC'
+        );
+
+        $statement->execute([
+            'product_id' => $productId,
+        ]);
+
+        return array_map(
+            'intval',
+            $statement->fetchAll(PDO::FETCH_COLUMN)
+        );
+    }
+
+    public function update(
+        int $id,
+        string $name,
+        ?string $unit,
+        string $price,
+        ?string $remark,
+        array $categoryIds
+    ): void {
+        $this->pdo->beginTransaction();
+
+        try {
+            $statement = $this->pdo->prepare(
+                'UPDATE products
+                SET
+                    name = :name,
+                    unit = :unit,
+                    price = :price,
+                    remark = :remark
+                WHERE id = :id'
+            );
+
+            $statement->execute([
+                'name' => $name,
+                'unit' => $unit,
+                'price' => $price,
+                'remark' => $remark,
+                'id' => $id,
+            ]);
+
+            $deleteCategoriesStatement = $this->pdo->prepare(
+                'DELETE FROM product_categories
+                WHERE product_id = :product_id'
+            );
+
+            $deleteCategoriesStatement->execute([
+                'product_id' => $id,
+            ]);
+
+            if ($categoryIds !== []) {
+                $categoryStatement = $this->pdo->prepare(
+                    'INSERT INTO product_categories (
+                        product_id,
+                        category_id
+                    ) VALUES (
+                        :product_id,
+                        :category_id
+                    )'
+                );
+
+                foreach ($categoryIds as $categoryId) {
+                    $categoryStatement->execute([
+                        'product_id' => $id,
+                        'category_id' => $categoryId,
+                    ]);
+                }
+            }
+
+            $this->pdo->commit();
+        } catch (Throwable $exception) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            throw $exception;
+        }
+    }
+
+    public function delete(int $id): bool
+    {
+        $statement = $this->pdo->prepare(
+            'DELETE FROM products
+            WHERE id = :id'
+        );
+
+        $statement->execute([
+            'id' => $id,
+        ]);
+
+        return $statement->rowCount() > 0;
+    }
 }
