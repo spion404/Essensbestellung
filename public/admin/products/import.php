@@ -8,7 +8,8 @@ use App\Repository\ProductRepository;
 use App\Service\ProductImportService;
 use Throwable;
 
-require dirname(__DIR__, 3) . '/config/bootstrap.php';
+require dirname(__DIR__, 3)
+    . '/config/bootstrap.php';
 
 session_start();
 
@@ -43,14 +44,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     );
 
     /*
-     * Neue XLSX-Datei einlesen.
+     * XLSX prüfen und Vorschau erzeugen.
      */
     if ($action === 'preview') {
         unset(
-            $_SESSION['product_import_preview']
+            $_SESSION[
+                'product_import_preview'
+            ]
         );
 
         $preview = null;
+
+        $mode = (string) (
+            $_POST['mode']
+            ?? ProductImportService::MODE_MERGE
+        );
+
+        if (
+            !in_array(
+                $mode,
+                [
+                    ProductImportService::MODE_MERGE,
+                    ProductImportService::MODE_REPLACE,
+                ],
+                true
+            )
+        ) {
+            $errors[] =
+                'Bitte einen gültigen '
+                . 'Importmodus auswählen.';
+        }
 
         if (
             !isset($_FILES['xlsx'])
@@ -63,14 +86,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             !== UPLOAD_ERR_OK
         ) {
             $errors[] =
-                'Die Datei konnte nicht hochgeladen werden.';
+                'Die Datei konnte nicht '
+                . 'hochgeladen werden.';
         } elseif (
             (int) $_FILES['xlsx']['size']
             > 5 * 1024 * 1024
         ) {
             $errors[] =
-                'Die XLSX-Datei darf maximal 5 MB gross sein.';
-        } else {
+                'Die XLSX-Datei darf maximal '
+                . '5 MB gross sein.';
+        }
+
+        if ($errors === []) {
             $originalName = basename(
                 (string) $_FILES['xlsx']['name']
             );
@@ -84,27 +111,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($extension !== 'xlsx') {
                 $errors[] =
-                    'Bitte eine Datei im XLSX-Format auswählen.';
+                    'Bitte eine Datei im '
+                    . 'XLSX-Format auswählen.';
             } else {
                 try {
                     $result =
                         $importService->read(
-                            $_FILES['xlsx']['tmp_name']
+                            $_FILES[
+                                'xlsx'
+                            ]['tmp_name']
                         );
 
-                    if ($result['errors'] !== []) {
+                    if (
+                        $result['errors']
+                        !== []
+                    ) {
                         $errors = array_merge(
                             $errors,
                             $result['errors']
                         );
-                    } elseif ($result['rows'] === []) {
+                    } elseif (
+                        $result['rows'] === []
+                    ) {
                         $errors[] =
-                            'Die XLSX-Datei enthält '
-                            . 'keine Produktzeilen.';
+                            'Die XLSX-Datei '
+                            . 'enthält keine '
+                            . 'Produktzeilen.';
                     } else {
                         $preview = [
                             'file_name' =>
                                 $originalName,
+                            'mode' =>
+                                $mode,
                             'rows' =>
                                 $result['rows'],
                         ];
@@ -115,67 +153,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 } catch (Throwable $exception) {
                     error_log(
-                        'XLSX import preview failed: '
-                        . $exception->getMessage()
-                    );
-
-                    $errors[] =
-                        'Die XLSX-Datei konnte '
-                        . 'nicht gelesen werden.';
-                }
-            }
-        }
-    }
-
-    /*
-     * Angezeigte Vorschau importieren.
-     */
-    if ($action === 'import') {
-        $preview =
-            $_SESSION['product_import_preview']
-            ?? null;
-
-        if ($preview === null) {
-            $errors[] =
-                'Es ist keine Importvorschau vorhanden.';
-        } else {
-            $hasRowErrors = false;
-
-            foreach ($preview['rows'] as $row) {
-                if ($row['errors'] !== []) {
-                    $hasRowErrors = true;
-                    break;
-                }
-            }
-
-            if ($hasRowErrors) {
-                $errors[] =
-                    'Die Datei enthält fehlerhafte Zeilen '
-                    . 'und kann noch nicht importiert werden.';
-            } else {
-                try {
-                    $imported =
-                        $importService->import(
-                            $preview['rows']
-                        );
-
-                    unset(
-                        $_SESSION[
-                            'product_import_preview'
-                        ]
-                    );
-
-                    header(
-                        'Location: /admin/products.php'
-                        . '?imported='
-                        . $imported
-                    );
-
-                    exit;
-                } catch (Throwable $exception) {
-                    error_log(
                         sprintf(
-                            'XLSX product import failed: %s: %s in %s:%d',
+                            'XLSX preview failed: '
+                            . '%s: %s in %s:%d',
                             $exception::class,
                             $exception->getMessage(),
                             $exception->getFile(),
@@ -184,15 +164,107 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
 
                     $errors[] =
-                        'Der Import konnte nicht abgeschlossen werden.';
+                        'Die XLSX-Datei konnte '
+                        . 'nicht gelesen werden.';
 
                     if ($debug) {
                         $errors[] = sprintf(
-                            'Technischer Fehler: %s: %s in %s:%d',
+                            'Technischer Fehler: '
+                            . '%s: %s',
+                            $exception::class,
+                            $exception->getMessage()
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    /*
+     * Vorschau endgültig importieren.
+     */
+    if ($action === 'import') {
+        $preview =
+            $_SESSION[
+                'product_import_preview'
+            ]
+            ?? null;
+
+        if ($preview === null) {
+            $errors[] =
+                'Es ist keine Importvorschau '
+                . 'vorhanden.';
+        } else {
+            $hasRowErrors = false;
+
+            foreach (
+                $preview['rows']
+                as $row
+            ) {
+                if ($row['errors'] !== []) {
+                    $hasRowErrors = true;
+                    break;
+                }
+            }
+
+            if ($hasRowErrors) {
+                $errors[] =
+                    'Die Datei enthält '
+                    . 'fehlerhafte Zeilen und '
+                    . 'kann noch nicht '
+                    . 'importiert werden.';
+            } else {
+                try {
+                    $result =
+                        $importService->import(
+                            $preview['rows'],
+                            $preview['mode']
+                        );
+
+                    unset(
+                        $_SESSION[
+                            'product_import_preview'
+                        ]
+                    );
+
+                    $query = http_build_query([
+                        'import_created' =>
+                            $result['created'],
+                        'import_updated' =>
+                            $result['updated'],
+                        'import_deleted' =>
+                            $result['deleted'],
+                    ]);
+
+                    header(
+                        'Location: '
+                        . '/admin/products.php?'
+                        . $query
+                    );
+
+                    exit;
+                } catch (Throwable $exception) {
+                    error_log(
+                        sprintf(
+                            'XLSX import failed: '
+                            . '%s: %s in %s:%d',
                             $exception::class,
                             $exception->getMessage(),
                             $exception->getFile(),
                             $exception->getLine()
+                        )
+                    );
+
+                    $errors[] =
+                        'Der Import konnte nicht '
+                        . 'abgeschlossen werden.';
+
+                    if ($debug) {
+                        $errors[] = sprintf(
+                            'Technischer Fehler: '
+                            . '%s: %s',
+                            $exception::class,
+                            $exception->getMessage()
                         );
                     }
                 }

@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-$escape = static function (mixed $value): string {
+$escape = static function (
+    mixed $value
+): string {
     return htmlspecialchars(
         (string) $value,
         ENT_QUOTES,
@@ -46,15 +48,29 @@ $escape = static function (mixed $value): string {
     </p>
 <?php endif; ?>
 
-<?php if ($imported > 0): ?>
+<?php if ($importCompleted): ?>
+
     <p>
-        <?= $imported ?>
-        <?= $imported === 1
-            ? 'Produkt wurde'
-            : 'Produkte wurden'
-        ?>
-        importiert.
+        Der Produktimport wurde abgeschlossen.
     </p>
+
+    <ul>
+        <li>
+            Neu erstellt:
+            <?= $importCreated ?? 0 ?>
+        </li>
+
+        <li>
+            Aktualisiert:
+            <?= $importUpdated ?? 0 ?>
+        </li>
+
+        <li>
+            Vor dem Import entfernt:
+            <?= $importDeleted ?? 0 ?>
+        </li>
+    </ul>
+
 <?php endif; ?>
 
 <p>
@@ -80,6 +96,7 @@ $escape = static function (mixed $value): string {
     <table>
         <thead>
             <tr>
+                <th>Artikelnummer</th>
                 <th>Produkt</th>
                 <th>Einheit</th>
                 <th>Preis</th>
@@ -91,15 +108,45 @@ $escape = static function (mixed $value): string {
 
         <tbody>
 
-        <?php foreach ($products as $product): ?>
+        <?php foreach (
+            $products as $product
+        ): ?>
 
             <tr>
                 <td>
-                    <?= $escape($product['name']) ?>
+                    <?php if (
+                        $product['article_number']
+                        === null
+                        || $product['article_number']
+                        === ''
+                    ): ?>
+                        –
+                    <?php else: ?>
+                        <?= $escape(
+                            $product[
+                                'article_number'
+                            ]
+                        ) ?>
+                    <?php endif; ?>
                 </td>
 
                 <td>
-                    <?= $escape($product['unit']) ?>
+                    <?= $escape(
+                        $product['name']
+                    ) ?>
+                </td>
+
+                <td>
+                    <?php if (
+                        $product['unit'] === null
+                        || $product['unit'] === ''
+                    ): ?>
+                        –
+                    <?php else: ?>
+                        <?= $escape(
+                            $product['unit']
+                        ) ?>
+                    <?php endif; ?>
                 </td>
 
                 <td>
@@ -112,21 +159,32 @@ $escape = static function (mixed $value): string {
                 </td>
 
                 <td>
-                    <?php if ($product['categories'] === null): ?>
+                    <?php if (
+                        $product['categories']
+                        === null
+                    ): ?>
                         –
                     <?php else: ?>
-                        <?= $escape($product['categories']) ?>
+                        <?= $escape(
+                            $product[
+                                'categories'
+                            ]
+                        ) ?>
                     <?php endif; ?>
                 </td>
 
                 <td>
                     <?php if (
-                        $product['remark'] === null
-                        || $product['remark'] === ''
+                        $product['remark']
+                        === null
+                        || $product['remark']
+                        === ''
                     ): ?>
                         –
                     <?php else: ?>
-                        <?= $escape($product['remark']) ?>
+                        <?= $escape(
+                            $product['remark']
+                        ) ?>
                     <?php endif; ?>
                 </td>
 

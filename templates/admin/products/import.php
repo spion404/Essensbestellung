@@ -2,7 +2,11 @@
 
 declare(strict_types=1);
 
-$escape = static function (mixed $value): string {
+use App\Service\ProductImportService;
+
+$escape = static function (
+    mixed $value
+): string {
     return htmlspecialchars(
         (string) $value,
         ENT_QUOTES,
@@ -48,8 +52,8 @@ if ($preview !== null) {
 <h1>Produkte aus XLSX importieren</h1>
 
 <p>
-    Die erste Zeile der Datei muss folgende
-    Spalten enthalten:
+    Die erste Zeile der Datei muss
+    folgende Spalten enthalten:
 </p>
 
 <table>
@@ -60,11 +64,13 @@ if ($preview !== null) {
             <th>C</th>
             <th>D</th>
             <th>E</th>
+            <th>F</th>
         </tr>
     </thead>
 
     <tbody>
         <tr>
+            <td>Artikelnummer</td>
             <td>Produkt</td>
             <td>Einheit</td>
             <td>Preis</td>
@@ -75,8 +81,8 @@ if ($preview !== null) {
 </table>
 
 <p>
-    Mehrere Kategorien werden mit einem
-    Semikolon getrennt.
+    Mehrere Kategorien werden mit
+    einem Semikolon getrennt.
 </p>
 
 <p>
@@ -84,6 +90,13 @@ if ($preview !== null) {
     <code>
         Saucen &amp; Gewürze; Vegetarisch
     </code>
+</p>
+
+<p>
+    Die Artikelnummer sollte in Excel
+    als Text gespeichert werden.
+    Dadurch bleiben auch führende Nullen
+    erhalten.
 </p>
 
 <?php if ($errors !== []): ?>
@@ -109,6 +122,52 @@ if ($preview !== null) {
         name="action"
         value="preview"
     >
+
+    <fieldset>
+        <legend>Importmodus</legend>
+
+        <p>
+            <label>
+                <input
+                    type="radio"
+                    name="mode"
+                    value="<?= ProductImportService::MODE_MERGE ?>"
+                    checked
+                >
+
+                <strong>
+                    Ergänzen / aktualisieren
+                </strong>
+            </label>
+        </p>
+
+        <p>
+            Neue Artikelnummern werden
+            hinzugefügt. Bereits vorhandene
+            Artikelnummern werden mit den
+            Daten aus der XLSX aktualisiert.
+        </p>
+
+        <p>
+            <label>
+                <input
+                    type="radio"
+                    name="mode"
+                    value="<?= ProductImportService::MODE_REPLACE ?>"
+                >
+
+                <strong>
+                    Bestehenden Katalog ersetzen
+                </strong>
+            </label>
+        </p>
+
+        <p>
+            Alle bisherigen Produkte werden
+            entfernt und durch die Produkte
+            aus der XLSX ersetzt.
+        </p>
+    </fieldset>
 
     <p>
         <label for="xlsx">
@@ -141,9 +200,42 @@ if ($preview !== null) {
     <p>
         Datei:
         <strong>
-            <?= $escape($preview['file_name']) ?>
+            <?= $escape(
+                $preview['file_name']
+            ) ?>
         </strong>
     </p>
+
+    <p>
+        Importmodus:
+        <strong>
+            <?php if (
+                $preview['mode']
+                === ProductImportService::MODE_REPLACE
+            ): ?>
+                Bestehenden Katalog ersetzen
+            <?php else: ?>
+                Ergänzen / aktualisieren
+            <?php endif; ?>
+        </strong>
+    </p>
+
+    <?php if (
+        $preview['mode']
+        === ProductImportService::MODE_REPLACE
+    ): ?>
+
+        <p>
+            <strong>
+                Achtung:
+            </strong>
+
+            Beim Bestätigen werden sämtliche
+            vorhandenen Produkte gelöscht und
+            durch diesen Katalog ersetzt.
+        </p>
+
+    <?php endif; ?>
 
     <p>
         Gültige Zeilen:
@@ -158,6 +250,7 @@ if ($preview !== null) {
         <thead>
             <tr>
                 <th>Zeile</th>
+                <th>Artikelnummer</th>
                 <th>Produkt</th>
                 <th>Einheit</th>
                 <th>Preis</th>
@@ -169,7 +262,10 @@ if ($preview !== null) {
 
         <tbody>
 
-        <?php foreach ($preview['rows'] as $row): ?>
+        <?php foreach (
+            $preview['rows']
+            as $row
+        ): ?>
 
             <tr>
                 <td>
@@ -177,7 +273,15 @@ if ($preview !== null) {
                 </td>
 
                 <td>
-                    <?= $escape($row['name']) ?>
+                    <?= $escape(
+                        $row['article_number']
+                    ) ?>
+                </td>
+
+                <td>
+                    <?= $escape(
+                        $row['name']
+                    ) ?>
                 </td>
 
                 <td>
@@ -188,11 +292,15 @@ if ($preview !== null) {
                 </td>
 
                 <td>
-                    <?= $escape($row['price']) ?>
+                    <?= $escape(
+                        $row['price']
+                    ) ?>
                 </td>
 
                 <td>
-                    <?php if ($row['categories'] === []): ?>
+                    <?php if (
+                        $row['categories'] === []
+                    ): ?>
                         –
                     <?php else: ?>
                         <?= $escape(
@@ -206,13 +314,17 @@ if ($preview !== null) {
 
                 <td>
                     <?= $row['remark'] !== ''
-                        ? $escape($row['remark'])
+                        ? $escape(
+                            $row['remark']
+                        )
                         : '–'
                     ?>
                 </td>
 
                 <td>
-                    <?php if ($row['errors'] === []): ?>
+                    <?php if (
+                        $row['errors'] === []
+                    ): ?>
 
                         OK
 
@@ -224,7 +336,9 @@ if ($preview !== null) {
                         ): ?>
 
                             <div>
-                                <?= $escape($rowError) ?>
+                                <?= $escape(
+                                    $rowError
+                                ) ?>
                             </div>
 
                         <?php endforeach; ?>
@@ -242,11 +356,25 @@ if ($preview !== null) {
 
         <h2>Import bestätigen</h2>
 
-        <p>
-            Beim Import werden
-            <?= $validRows ?>
-            Produkte erstellt.
-        </p>
+        <?php if (
+            $preview['mode']
+            === ProductImportService::MODE_REPLACE
+        ): ?>
+
+            <p>
+                Der bestehende Produktkatalog
+                wird vollständig ersetzt.
+            </p>
+
+        <?php else: ?>
+
+            <p>
+                Bestehende Produkte mit gleicher
+                Artikelnummer werden aktualisiert.
+                Neue Artikelnummern werden ergänzt.
+            </p>
+
+        <?php endif; ?>
 
         <p>
             Noch nicht vorhandene Kategorien
@@ -261,7 +389,7 @@ if ($preview !== null) {
             >
 
             <button type="submit">
-                Produkte importieren
+                Import durchführen
             </button>
         </form>
 

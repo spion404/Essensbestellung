@@ -19,6 +19,7 @@ final class ProductRepository
         $statement = $this->pdo->query(
             'SELECT
                 p.id,
+                p.article_number,
                 p.name,
                 p.unit,
                 p.price,
@@ -35,6 +36,7 @@ final class ProductRepository
                 ON c.id = pc.category_id
             GROUP BY
                 p.id,
+                p.article_number,
                 p.name,
                 p.unit,
                 p.price,
@@ -45,84 +47,12 @@ final class ProductRepository
         return $statement->fetchAll();
     }
 
-    public function create(
-        string $name,
-        ?string $unit,
-        string $price,
-        ?string $remark,
-        array $categoryIds
-    ): int {
-        $ownsTransaction = !$this->pdo->inTransaction();
-
-        if ($ownsTransaction) {
-            $this->pdo->beginTransaction();
-        }
-
-        try {
-            $statement = $this->pdo->prepare(
-                'INSERT INTO products (
-                    name,
-                    unit,
-                    price,
-                    remark
-                ) VALUES (
-                    :name,
-                    :unit,
-                    :price,
-                    :remark
-                )'
-            );
-
-            $statement->execute([
-                'name' => $name,
-                'unit' => $unit,
-                'price' => $price,
-                'remark' => $remark,
-            ]);
-
-            $productId = (int) $this->pdo->lastInsertId();
-
-            if ($categoryIds !== []) {
-                $categoryStatement = $this->pdo->prepare(
-                    'INSERT INTO product_categories (
-                        product_id,
-                        category_id
-                    ) VALUES (
-                        :product_id,
-                        :category_id
-                    )'
-                );
-
-                foreach ($categoryIds as $categoryId) {
-                    $categoryStatement->execute([
-                        'product_id' => $productId,
-                        'category_id' => $categoryId,
-                    ]);
-                }
-            }
-
-            if ($ownsTransaction) {
-                $this->pdo->commit();
-            }
-
-            return $productId;
-        } catch (Throwable $exception) {
-            if (
-                $ownsTransaction
-                && $this->pdo->inTransaction()
-            ) {
-                $this->pdo->rollBack();
-            }
-
-            throw $exception;
-        }
-    }
-
     public function findById(int $id): ?array
     {
         $statement = $this->pdo->prepare(
             'SELECT
                 id,
+                article_number,
                 name,
                 unit,
                 price,
@@ -133,6 +63,35 @@ final class ProductRepository
 
         $statement->execute([
             'id' => $id,
+        ]);
+
+        $product = $statement->fetch();
+
+        if ($product === false) {
+            return null;
+        }
+
+        return $product;
+    }
+
+    public function findByArticleNumber(
+        string $articleNumber
+    ): ?array {
+        $statement = $this->pdo->prepare(
+            'SELECT
+                id,
+                article_number,
+                name,
+                unit,
+                price,
+                remark
+            FROM products
+            WHERE article_number = :article_number
+            LIMIT 1'
+        );
+
+        $statement->execute([
+            'article_number' => $articleNumber,
         ]);
 
         $product = $statement->fetch();
@@ -163,6 +122,71 @@ final class ProductRepository
         );
     }
 
+    public function create(
+        string $name,
+        ?string $unit,
+        string $price,
+        ?string $remark,
+        array $categoryIds,
+        ?string $articleNumber = null
+    ): int {
+        $ownsTransaction =
+            !$this->pdo->inTransaction();
+
+        if ($ownsTransaction) {
+            $this->pdo->beginTransaction();
+        }
+
+        try {
+            $statement = $this->pdo->prepare(
+                'INSERT INTO products (
+                    article_number,
+                    name,
+                    unit,
+                    price,
+                    remark
+                ) VALUES (
+                    :article_number,
+                    :name,
+                    :unit,
+                    :price,
+                    :remark
+                )'
+            );
+
+            $statement->execute([
+                'article_number' => $articleNumber,
+                'name' => $name,
+                'unit' => $unit,
+                'price' => $price,
+                'remark' => $remark,
+            ]);
+
+            $productId =
+                (int) $this->pdo->lastInsertId();
+
+            $this->replaceCategories(
+                $productId,
+                $categoryIds
+            );
+
+            if ($ownsTransaction) {
+                $this->pdo->commit();
+            }
+
+            return $productId;
+        } catch (Throwable $exception) {
+            if (
+                $ownsTransaction
+                && $this->pdo->inTransaction()
+            ) {
+                $this->pdo->rollBack();
+            }
+
+            throw $exception;
+        }
+    }
+
     public function update(
         int $id,
         string $name,
@@ -171,7 +195,12 @@ final class ProductRepository
         ?string $remark,
         array $categoryIds
     ): void {
-        $this->pdo->beginTransaction();
+        $ownsTransaction =
+            !$this->pdo->inTransaction();
+
+        if ($ownsTransaction) {
+            $this->pdo->beginTransaction();
+        }
 
         try {
             $statement = $this->pdo->prepare(
@@ -192,42 +221,54 @@ final class ProductRepository
                 'id' => $id,
             ]);
 
-            $deleteCategoriesStatement = $this->pdo->prepare(
-                'DELETE FROM product_categories
-                WHERE product_id = :product_id'
+            $this->replaceCategories(
+                $id,
+                $categoryIds
             );
 
-            $deleteCategoriesStatement->execute([
-                'product_id' => $id,
-            ]);
-
-            if ($categoryIds !== []) {
-                $categoryStatement = $this->pdo->prepare(
-                    'INSERT INTO product_categories (
-                        product_id,
-                        category_id
-                    ) VALUES (
-                        :product_id,
-                        :category_id
-                    )'
-                );
-
-                foreach ($categoryIds as $categoryId) {
-                    $categoryStatement->execute([
-                        'product_id' => $id,
-                        'category_id' => $categoryId,
-                    ]);
-                }
+            if ($ownsTransaction) {
+                $this->pdo->commit();
             }
-
-            $this->pdo->commit();
         } catch (Throwable $exception) {
-            if ($this->pdo->inTransaction()) {
+            if (
+                $ownsTransaction
+                && $this->pdo->inTransaction()
+            ) {
                 $this->pdo->rollBack();
             }
 
             throw $exception;
         }
+    }
+
+    public function updateByArticleNumber(
+        string $articleNumber,
+        string $name,
+        ?string $unit,
+        string $price,
+        ?string $remark,
+        array $categoryIds
+    ): void {
+        $product = $this->findByArticleNumber(
+            $articleNumber
+        );
+
+        if ($product === null) {
+            throw new \RuntimeException(
+                'Produkt mit Artikelnummer '
+                . $articleNumber
+                . ' wurde nicht gefunden.'
+            );
+        }
+
+        $this->update(
+            (int) $product['id'],
+            $name,
+            $unit,
+            $price,
+            $remark,
+            $categoryIds
+        );
     }
 
     public function delete(int $id): bool
@@ -242,5 +283,51 @@ final class ProductRepository
         ]);
 
         return $statement->rowCount() > 0;
+    }
+
+    public function deleteAll(): int
+    {
+        $statement = $this->pdo->prepare(
+            'DELETE FROM products'
+        );
+
+        $statement->execute();
+
+        return $statement->rowCount();
+    }
+
+    private function replaceCategories(
+        int $productId,
+        array $categoryIds
+    ): void {
+        $deleteStatement = $this->pdo->prepare(
+            'DELETE FROM product_categories
+            WHERE product_id = :product_id'
+        );
+
+        $deleteStatement->execute([
+            'product_id' => $productId,
+        ]);
+
+        if ($categoryIds === []) {
+            return;
+        }
+
+        $insertStatement = $this->pdo->prepare(
+            'INSERT INTO product_categories (
+                product_id,
+                category_id
+            ) VALUES (
+                :product_id,
+                :category_id
+            )'
+        );
+
+        foreach ($categoryIds as $categoryId) {
+            $insertStatement->execute([
+                'product_id' => $productId,
+                'category_id' => $categoryId,
+            ]);
+        }
     }
 }
