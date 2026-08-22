@@ -52,7 +52,11 @@ final class ProductRepository
         ?string $remark,
         array $categoryIds
     ): int {
-        $this->pdo->beginTransaction();
+        $ownsTransaction = !$this->pdo->inTransaction();
+
+        if ($ownsTransaction) {
+            $this->pdo->beginTransaction();
+        }
 
         try {
             $statement = $this->pdo->prepare(
@@ -97,11 +101,16 @@ final class ProductRepository
                 }
             }
 
-            $this->pdo->commit();
+            if ($ownsTransaction) {
+                $this->pdo->commit();
+            }
 
             return $productId;
         } catch (Throwable $exception) {
-            if ($this->pdo->inTransaction()) {
+            if (
+                $ownsTransaction
+                && $this->pdo->inTransaction()
+            ) {
                 $this->pdo->rollBack();
             }
 

@@ -28,6 +28,11 @@ $importService = new ProductImportService(
 
 $errors = [];
 
+$debug = filter_var(
+    $_ENV['APP_DEBUG'] ?? false,
+    FILTER_VALIDATE_BOOL
+);
+
 $preview =
     $_SESSION['product_import_preview']
     ?? null;
@@ -169,13 +174,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit;
                 } catch (Throwable $exception) {
                     error_log(
-                        'XLSX product import failed: '
-                        . $exception->getMessage()
+                        sprintf(
+                            'XLSX product import failed: %s: %s in %s:%d',
+                            $exception::class,
+                            $exception->getMessage(),
+                            $exception->getFile(),
+                            $exception->getLine()
+                        )
                     );
 
                     $errors[] =
-                        'Der Import konnte nicht '
-                        . 'abgeschlossen werden.';
+                        'Der Import konnte nicht abgeschlossen werden.';
+
+                    if ($debug) {
+                        $errors[] = sprintf(
+                            'Technischer Fehler: %s: %s in %s:%d',
+                            $exception::class,
+                            $exception->getMessage(),
+                            $exception->getFile(),
+                            $exception->getLine()
+                        );
+                    }
                 }
             }
         }
