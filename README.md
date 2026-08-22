@@ -1,8 +1,9 @@
 Essensbestellungstool, ursprünglich entwickelt für das KALA 2027 der Pfadi Unterwalden mit folgenden Features:
 -
 
-Passwortgeschütze Bestellansicht für jede Gruppe:
+Bestellansicht für jede Gruppe:
 - 
+- passwortgeschützt
 - Auswahl des gewünschten Tages
 - Übersicht verfügbarer Produkte und Tages- und Lagerbudget
 - Filter- und Durchsuchbar nach Produktname, Kategorie und Essgewohnheiten/Allergien
@@ -10,6 +11,7 @@ Passwortgeschütze Bestellansicht für jede Gruppe:
 
 Adminbereich:
 -
+- passwortgeschützt
 - Dashboard mit Übersicht über Gruppen, Bestellungen, Produkte, etc.
 - Grundeinstellungen: Namen, Bestellzeitpunkte, Budget pro Person, etc.
 - Gruppenerstellung mit Eingabe Personen für Budgetberechnung
