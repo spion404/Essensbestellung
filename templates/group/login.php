@@ -24,102 +24,150 @@ $escape = static function (mixed $value): string {
     <title>
         Gruppenlogin – <?= $escape($settings['camp_name']) ?>
     </title>
+
+    <link rel="stylesheet" href="/assets/app.css">
 </head>
 
-<body>
+<body class="auth-page">
 
-<h1><?= $escape($settings['camp_name']) ?></h1>
+<main class="auth-shell">
 
-<h2>Gruppenlogin</h2>
+    <section class="auth-card">
 
-<?php if ($loggedOut): ?>
-    <p>
-        Du wurdest abgemeldet.
-    </p>
-<?php endif; ?>
+        <a class="brand" href="/">
+            <span class="brand__mark">
+                EB
+            </span>
 
-<?php if ($error !== null): ?>
-    <p>
-        <strong><?= $escape($error) ?></strong>
-    </p>
-<?php endif; ?>
+            <span class="brand__text">
+                <span class="brand__title">
+                    <?= $escape($settings['camp_name']) ?>
+                </span>
 
-<?php if ($groups === []): ?>
+                <span class="brand__subtitle">
+                    Essensbestellung
+                </span>
+            </span>
+        </a>
 
-    <p>
-        Es wurden noch keine Gruppen eingerichtet.
-    </p>
+        <p class="eyebrow">
+            Gruppenbereich
+        </p>
 
-<?php else: ?>
+        <h1>Anmelden</h1>
 
-    <form method="post" action="/group/login.php">
-        <input
-            type="hidden"
-            name="csrf_token"
-            value="<?= $escape($csrfToken) ?>"
-        >
+        <p class="lead">
+            Wähle deine Gruppe aus und melde dich mit dem
+            Gruppenpasswort an.
+        </p>
 
-        <p>
-            <label for="group_id">
-                Gruppe
-            </label>
-            <br>
+        <?php if ($loggedOut): ?>
 
-            <select
-                id="group_id"
-                name="group_id"
-                required
-                autofocus
+            <div class="alert alert--success">
+                Du wurdest erfolgreich abgemeldet.
+            </div>
+
+        <?php endif; ?>
+
+        <?php if ($error !== null): ?>
+
+            <div class="alert alert--danger">
+                <strong>
+                    <?= $escape($error) ?>
+                </strong>
+            </div>
+
+        <?php endif; ?>
+
+        <?php if ($groups === []): ?>
+
+            <div class="alert alert--warning">
+                Es wurden noch keine Gruppen eingerichtet.
+            </div>
+
+        <?php else: ?>
+
+            <form
+                method="post"
+                action="/group/login.php"
             >
-                <option value="">
-                    Bitte auswählen
-                </option>
 
-                <?php foreach ($groups as $group): ?>
-                    <option
-                        value="<?= (int) $group['id'] ?>"
-                        <?php if (
-                            $selectedGroupId
-                            === (string) $group['id']
-                        ): ?>
-                            selected
-                        <?php endif; ?>
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="<?= $escape($csrfToken) ?>"
+                >
+
+                <div class="field">
+
+                    <label for="group_id">
+                        Gruppe
+                    </label>
+
+                    <select
+                        id="group_id"
+                        name="group_id"
+                        required
+                        autofocus
                     >
-                        <?= $escape($group['name']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </p>
 
-        <p>
-            <label for="password">
-                Passwort
-            </label>
-            <br>
+                        <option value="">
+                            Bitte auswählen
+                        </option>
 
-            <input
-                type="password"
-                id="password"
-                name="password"
-                autocomplete="current-password"
-                required
-            >
-        </p>
+                        <?php foreach ($groups as $group): ?>
 
-        <p>
-            <button type="submit">
-                Anmelden
-            </button>
-        </p>
-    </form>
+                            <option
+                                value="<?= (int) $group['id'] ?>"
+                                <?php if (
+                                    $selectedGroupId
+                                    === (string) $group['id']
+                                ): ?>
+                                    selected
+                                <?php endif; ?>
+                            >
+                                <?= $escape($group['name']) ?>
+                            </option>
 
-<?php endif; ?>
+                        <?php endforeach; ?>
 
-<p>
-    <a href="/">
-        Zur Startseite
-    </a>
-</p>
+                    </select>
+
+                </div>
+
+                <div class="field">
+
+                    <label for="password">
+                        Passwort
+                    </label>
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        autocomplete="current-password"
+                        required
+                    >
+
+                </div>
+
+                <button type="submit">
+                    Anmelden
+                </button>
+
+            </form>
+
+        <?php endif; ?>
+
+    </section>
+
+    <p class="auth-card__footer">
+        <a href="/">
+            Zur Startseite
+        </a>
+    </p>
+
+</main>
 
 </body>
 </html>

@@ -63,196 +63,395 @@ $statusLabels = [
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Bestellungen</title>
+    <title>
+        Bestellungen – Administration
+    </title>
+
+    <link rel="stylesheet" href="/assets/app.css">
 </head>
+
 <body>
 
-<h1>Bestellungen</h1>
+<header class="topbar">
 
-<p>
-    <a href="/admin/groups.php">
-        Gruppen
-    </a>
-    |
-    <a href="/admin/products.php">
-        Produkte
-    </a>
-    |
-    <a href="/admin/settings.php">
-        Einstellungen
-    </a>
-</p>
+    <div class="topbar__inner">
 
-<form
-    method="post"
-    action="/admin/logout.php"
->
-    <input
-        type="hidden"
-        name="csrf_token"
-        value="<?= $escape($adminCsrfToken) ?>"
-    >
+        <a
+            class="brand"
+            href="/admin/orders.php"
+        >
 
-    <button type="submit">
-        Administration abmelden
-    </button>
-</form>
+            <span class="brand__mark">
+                EB
+            </span>
 
-<h2>Tagesauswertungen</h2>
+            <span class="brand__text">
 
-<?php if ($deliveryDays === []): ?>
+                <span class="brand__title">
+                    <?= $escape($settings['camp_name']) ?>
+                </span>
 
-    <p>
-        Es sind noch keine Liefertage mit
-        Teilnehmern konfiguriert.
-    </p>
+                <span class="brand__subtitle">
+                    Administration
+                </span>
 
-<?php else: ?>
+            </span>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Liefertag</th>
-                <th>Gruppen</th>
-                <th>Bestätigt</th>
-                <th>Entwürfe</th>
-                <th>Fehlend</th>
-                <th>Aktion</th>
-            </tr>
-        </thead>
+        </a>
 
-        <tbody>
+        <div class="topbar__actions">
 
-        <?php foreach ($deliveryDays as $day): ?>
-            <tr>
-                <td>
-                    <?= $escape(
-                        $formatDate(
-                            (string) $day['date']
-                        )
-                    ) ?>
-                </td>
+            <nav
+                class="nav"
+                aria-label="Administration"
+            >
 
-                <td>
-                    <?= (int) $day['expected_groups'] ?>
-                </td>
+                <a
+                    href="/admin/orders.php"
+                    aria-current="page"
+                >
+                    Bestellungen
+                </a>
 
-                <td>
-                    <?= (int) $day['submitted_orders'] ?>
-                </td>
+                <a href="/admin/groups.php">
+                    Gruppen
+                </a>
 
-                <td>
-                    <?= (int) $day['draft_orders'] ?>
-                </td>
+                <a href="/admin/products.php">
+                    Produkte
+                </a>
 
-                <td>
-                    <?= (int) $day['missing_orders'] ?>
-                </td>
+                <a href="/admin/categories.php">
+                    Kategorien
+                </a>
 
-                <td>
-                    <a
-                        href="/admin/orders/day.php?date=<?= $escape(
-                            rawurlencode(
-                                (string) $day['date']
-                            )
-                        ) ?>"
-                    >
-                        Tagesauswertung
-                    </a>
-                </td>
-            </tr>
-        <?php endforeach; ?>
+                <a href="/admin/settings.php">
+                    Einstellungen
+                </a>
 
-        </tbody>
-    </table>
+            </nav>
 
-<?php endif; ?>
+            <form
+                class="inline-form"
+                method="post"
+                action="/admin/logout.php"
+            >
 
-<h2>Alle gespeicherten Bestellungen</h2>
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="<?= $escape($adminCsrfToken) ?>"
+                >
 
-<?php if ($orders === []): ?>
+                <button
+                    class="button--secondary button--small"
+                    type="submit"
+                >
+                    Abmelden
+                </button>
 
-    <p>
-        Es wurden noch keine Bestellungen gespeichert.
-    </p>
+            </form>
 
-<?php else: ?>
+        </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Liefertag</th>
-                <th>Gruppe</th>
-                <th>Status</th>
-                <th>Positionen</th>
-                <th>Warenwert</th>
-                <th>Aktionen</th>
-            </tr>
-        </thead>
+    </div>
 
-        <tbody>
+</header>
 
-        <?php foreach ($orders as $order): ?>
-            <tr>
-                <td>
-                    <?= $escape(
-                        $formatDate(
-                            (string) $order['delivery_date']
-                        )
-                    ) ?>
-                </td>
+<main class="app-container">
 
-                <td>
-                    <?= $escape(
-                        $order['group_name']
-                    ) ?>
-                </td>
+    <div class="page-header">
 
-                <td>
-                    <?= $escape(
-                        $statusLabels[
-                            $order['status']
-                        ]
-                        ?? $order['status']
-                    ) ?>
-                </td>
+        <div class="page-header__copy">
 
-                <td>
-                    <?= (int) $order['item_count'] ?>
-                </td>
+            <p class="eyebrow">
+                Administration
+            </p>
 
-                <td>
-                    <?= $escape(
-                        $formatMoney(
-                            $order['total_amount']
-                        )
-                    ) ?>
-                </td>
+            <h1>Bestellungen</h1>
 
-                <td>
-                    <a
-                        href="/admin/orders/view.php?id=<?= (int) $order['id'] ?>"
-                    >
-                        Anzeigen
-                    </a>
-                    |
-                    <a
-                        href="/admin/orders/edit.php?group_id=<?= (int) $order['group_id'] ?>&amp;date=<?= $escape(
-                            rawurlencode(
-                                (string) $order['delivery_date']
-                            )
-                        ) ?>"
-                    >
-                        Bearbeiten
-                    </a>
-                </td>
-            </tr>
-        <?php endforeach; ?>
+            <p class="lead">
+                Überblick über Liefertage, Gruppenstatus und alle
+                gespeicherten Bestellungen.
+            </p>
 
-        </tbody>
-    </table>
+        </div>
 
-<?php endif; ?>
+    </div>
+
+    <section class="panel">
+
+        <div class="panel__header">
+
+            <div>
+
+                <h2>Tagesauswertungen</h2>
+
+                <span class="small-muted">
+                    Status aller erwarteten Gruppen pro Liefertag.
+                </span>
+
+            </div>
+
+        </div>
+
+        <?php if ($deliveryDays === []): ?>
+
+            <div class="empty-state">
+                Es sind noch keine Liefertage mit Teilnehmern
+                konfiguriert.
+            </div>
+
+        <?php else: ?>
+
+            <div class="table-wrap">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Liefertag</th>
+                            <th>Gruppen</th>
+                            <th>Bestätigt</th>
+                            <th>Entwürfe</th>
+                            <th>Fehlend</th>
+                            <th>Aktion</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                    <?php foreach ($deliveryDays as $day): ?>
+
+                        <tr>
+
+                            <td>
+
+                                <strong>
+                                    <?= $escape(
+                                        $formatDate(
+                                            (string) $day['date']
+                                        )
+                                    ) ?>
+                                </strong>
+
+                            </td>
+
+                            <td>
+                                <?= (int) $day['expected_groups'] ?>
+                            </td>
+
+                            <td>
+
+                                <span
+                                    class="badge badge--success"
+                                >
+                                    <?= (int) $day['submitted_orders'] ?>
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <span
+                                    class="badge badge--warning"
+                                >
+                                    <?= (int) $day['draft_orders'] ?>
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <span
+                                    class="badge <?=
+                                        (int) $day['missing_orders'] > 0
+                                            ? 'badge--danger'
+                                            : 'badge--neutral'
+                                    ?>"
+                                >
+                                    <?= (int) $day['missing_orders'] ?>
+                                </span>
+
+                            </td>
+
+                            <td class="actions-cell">
+
+                                <a
+                                    class="button button--small"
+                                    href="/admin/orders/day.php?date=<?= $escape(
+                                        rawurlencode(
+                                            (string) $day['date']
+                                        )
+                                    ) ?>"
+                                >
+                                    Tagesauswertung
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                    <?php endforeach; ?>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        <?php endif; ?>
+
+    </section>
+
+    <section class="panel">
+
+        <div class="panel__header">
+
+            <div>
+
+                <h2>
+                    Alle gespeicherten Bestellungen
+                </h2>
+
+                <span class="small-muted">
+                    Entwürfe und bestätigte Bestellungen aller Tage.
+                </span>
+
+            </div>
+
+        </div>
+
+        <?php if ($orders === []): ?>
+
+            <div class="empty-state">
+                Es wurden noch keine Bestellungen gespeichert.
+            </div>
+
+        <?php else: ?>
+
+            <div class="table-wrap">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Liefertag</th>
+                            <th>Gruppe</th>
+                            <th>Status</th>
+                            <th>Positionen</th>
+                            <th>Warenwert</th>
+                            <th>Aktionen</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                    <?php foreach ($orders as $order): ?>
+
+                        <?php
+                        $statusClass =
+                            $order['status'] === 'submitted'
+                                ? 'badge--success'
+                                : 'badge--warning';
+                        ?>
+
+                        <tr>
+
+                            <td>
+                                <?= $escape(
+                                    $formatDate(
+                                        (string) $order[
+                                            'delivery_date'
+                                        ]
+                                    )
+                                ) ?>
+                            </td>
+
+                            <td>
+
+                                <strong>
+                                    <?= $escape(
+                                        $order['group_name']
+                                    ) ?>
+                                </strong>
+
+                            </td>
+
+                            <td>
+
+                                <span
+                                    class="badge <?= $statusClass ?>"
+                                >
+                                    <?= $escape(
+                                        $statusLabels[
+                                            $order['status']
+                                        ]
+                                        ?? $order['status']
+                                    ) ?>
+                                </span>
+
+                            </td>
+
+                            <td>
+                                <?= (int) $order['item_count'] ?>
+                            </td>
+
+                            <td class="numeric">
+                                <?= $escape(
+                                    $formatMoney(
+                                        $order['total_amount']
+                                    )
+                                ) ?>
+                            </td>
+
+                            <td class="actions-cell">
+
+                                <div class="toolbar">
+
+                                    <a
+                                        class="button button--secondary button--small"
+                                        href="/admin/orders/view.php?id=<?= (int) $order['id'] ?>"
+                                    >
+                                        Anzeigen
+                                    </a>
+
+                                    <a
+                                        class="button button--small"
+                                        href="/admin/orders/edit.php?group_id=<?= (int) $order['group_id'] ?>&amp;date=<?= $escape(
+                                            rawurlencode(
+                                                (string) $order[
+                                                    'delivery_date'
+                                                ]
+                                            )
+                                        ) ?>"
+                                    >
+                                        Bearbeiten
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    <?php endforeach; ?>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        <?php endif; ?>
+
+    </section>
+
+</main>
 
 </body>
 </html>

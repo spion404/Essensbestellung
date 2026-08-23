@@ -22,57 +22,103 @@ $escape = static function (mixed $value): string {
     >
 
     <title>Admin-Anmeldung</title>
+
+    <link rel="stylesheet" href="/assets/app.css">
 </head>
-<body>
 
-<h1>Administration</h1>
+<body class="auth-page">
 
-<h2>Anmeldung</h2>
+<main class="auth-shell">
 
-<?php if ($error !== null): ?>
-    <p>
-        <strong><?= $escape($error) ?></strong>
-    </p>
-<?php endif; ?>
+    <section class="auth-card">
 
-<form
-    method="post"
-    action="/admin/login.php"
->
-    <input
-        type="hidden"
-        name="csrf_token"
-        value="<?= $escape($csrfToken) ?>"
-    >
+        <a class="brand" href="/">
 
-    <p>
-        <label for="password">
-            Admin-Passwort
-        </label>
-        <br>
+            <span class="brand__mark">
+                EB
+            </span>
 
-        <input
-            type="password"
-            id="password"
-            name="password"
-            autocomplete="current-password"
-            required
-            autofocus
+            <span class="brand__text">
+
+                <span class="brand__title">
+                    Essensbestellung
+                </span>
+
+                <span class="brand__subtitle">
+                    Administration
+                </span>
+
+            </span>
+
+        </a>
+
+        <p class="eyebrow">
+            Geschützter Bereich
+        </p>
+
+        <h1>Administration</h1>
+
+        <p class="lead">
+            Melde dich mit dem Administrationspasswort an.
+        </p>
+
+        <?php if ($error !== null): ?>
+
+            <div class="alert alert--danger">
+
+                <strong>
+                    <?= $escape($error) ?>
+                </strong>
+
+            </div>
+
+        <?php endif; ?>
+
+        <form
+            method="post"
+            action="/admin/login.php"
         >
+
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="<?= $escape($csrfToken) ?>"
+            >
+
+            <div class="field">
+
+                <label for="password">
+                    Admin-Passwort
+                </label>
+
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    autocomplete="current-password"
+                    required
+                    autofocus
+                >
+
+            </div>
+
+            <button type="submit">
+                Anmelden
+            </button>
+
+        </form>
+
+    </section>
+
+    <p class="auth-card__footer">
+
+        <a href="/">
+            Zur Startseite
+        </a>
+
     </p>
 
-    <p>
-        <button type="submit">
-            Anmelden
-        </button>
-    </p>
-</form>
-
-<p>
-    <a href="/">
-        Zur Startseite
-    </a>
-</p>
+</main>
 
 </body>
 </html>

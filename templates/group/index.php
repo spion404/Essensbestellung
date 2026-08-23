@@ -68,202 +68,350 @@ $formatDateTime = static function (
     <title>
         Bestellungen – <?= $escape($group['name']) ?>
     </title>
+
+    <link rel="stylesheet" href="/assets/app.css">
 </head>
 
 <body>
 
-<h1><?= $escape($settings['camp_name']) ?></h1>
+<header class="topbar">
 
-<p>
-    Angemeldet als
-    <strong><?= $escape($group['name']) ?></strong>
-</p>
+    <div class="topbar__inner">
 
-<form
-    method="post"
-    action="/group/logout.php"
->
-    <input
-        type="hidden"
-        name="csrf_token"
-        value="<?= $escape($csrfToken) ?>"
-    >
+        <a
+            class="brand"
+            href="/group/"
+        >
 
-    <button type="submit">
-        Abmelden
-    </button>
-</form>
+            <span class="brand__mark">
+                EB
+            </span>
 
-<h2>Liefertage</h2>
+            <span class="brand__text">
 
-<p>
-    Lagerbudget dieser Gruppe:
-    <strong>
-        <?= $escape(
-            $formatMoney(
-                (int) $calculation['total_budget_cents']
-            )
-        ) ?>
-    </strong>
-</p>
+                <span class="brand__title">
+                    <?= $escape($settings['camp_name']) ?>
+                </span>
 
-<p>
-    Bestellschluss ist jeweils am Vortag um
-    <strong>
-        <?= $escape(
-            substr(
-                (string) $settings['order_cutoff_time'],
-                0,
-                5
-            )
-        ) ?>
-        Uhr
-    </strong>.
-</p>
+                <span class="brand__subtitle">
+                    Gruppenbestellung
+                </span>
 
-<?php if ($days === []): ?>
+            </span>
 
-    <p>
-        Für diese Gruppe sind keine Liefertage mit
-        Teilnehmern konfiguriert.
-    </p>
+        </a>
 
-<?php else: ?>
+        <div class="topbar__actions">
 
-    <table>
-        <thead>
-            <tr>
-                <th>Datum</th>
-                <th>Abschnitt</th>
-                <th>Tagesbudget</th>
-                <th>Bestellschluss</th>
-                <th>Status</th>
-                <th>Aktion</th>
-            </tr>
-        </thead>
+            <span class="topbar__identity">
+                Angemeldet als
+                <strong>
+                    <?= $escape($group['name']) ?>
+                </strong>
+            </span>
 
-        <tbody>
+            <form
+                class="inline-form"
+                method="post"
+                action="/group/logout.php"
+            >
 
-        <?php foreach ($days as $entry): ?>
-            <?php
-            $day = $entry['budget_day'];
-            $order = $entry['order'];
-            $cutoff = $entry['cutoff'];
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="<?= $escape($csrfToken) ?>"
+                >
 
-            $isOpen =
-                (bool) $cutoff['is_open'];
+                <button
+                    class="button--secondary button--small"
+                    type="submit"
+                >
+                    Abmelden
+                </button>
 
-            $target = null;
-            $linkLabel = null;
+            </form>
 
-            if (
-                $order !== null
-                && $order['status'] === 'submitted'
-            ) {
-                $status = 'Bestätigt';
+        </div>
 
-                $target =
-                    '/group/review.php?date=';
+    </div>
 
-                $linkLabel =
-                    'Bestellung anzeigen';
-            } elseif (!$isOpen) {
-                if ($order !== null) {
-                    $status =
-                        'Entwurf – Bestellschluss vorbei';
+</header>
 
-                    $target =
-                        '/group/review.php?date=';
+<main class="app-container">
 
-                    $linkLabel =
-                        'Entwurf anzeigen';
-                } else {
-                    $status =
-                        'Nicht bestellt – Bestellschluss vorbei';
-                }
-            } elseif ($order !== null) {
-                $status = 'Entwurf';
+    <div class="page-header">
 
-                $target =
-                    '/group/order.php?date=';
+        <div class="page-header__copy">
 
-                $linkLabel =
-                    'Entwurf fortsetzen';
-            } else {
-                $status = 'Offen';
+            <p class="eyebrow">
+                Deine Bestellungen
+            </p>
 
-                $target =
-                    '/group/order.php?date=';
+            <h1>Liefertage</h1>
 
-                $linkLabel =
-                    'Bestellung erfassen';
-            }
-            ?>
+            <p class="lead">
+                Wähle einen offenen Liefertag, um eine Bestellung
+                zu erfassen oder einen bestehenden Entwurf
+                weiterzubearbeiten.
+            </p>
 
-            <tr>
-                <td>
-                    <?= $escape(
-                        $formatDate(
-                            (string) $day['date']
-                        )
-                    ) ?>
-                </td>
+        </div>
 
-                <td>
-                    <?= $escape(
-                        implode(
-                            ' + ',
-                            $day['labels']
-                        )
-                    ) ?>
-                </td>
+    </div>
 
-                <td>
-                    <?= $escape(
-                        $formatMoney(
-                            (int) $day['budget_cents']
-                        )
-                    ) ?>
-                </td>
+    <div class="stats">
 
-                <td>
-                    <?= $escape(
-                        $formatDateTime(
-                            $cutoff['deadline']
-                        )
-                    ) ?>
-                </td>
+        <div class="stat">
 
-                <td>
-                    <?= $escape($status) ?>
-                </td>
+            <span class="stat__label">
+                Lagerbudget
+            </span>
 
-                <td>
-                    <?php if (
-                        $target !== null
-                        && $linkLabel !== null
-                    ): ?>
-                        <a
-                            href="<?= $escape(
-                                $target
-                                . rawurlencode(
-                                    (string) $day['date']
-                                )
-                            ) ?>"
-                        >
-                            <?= $escape($linkLabel) ?>
-                        </a>
-                    <?php else: ?>
-                        Geschlossen
-                    <?php endif; ?>
-                </td>
-            </tr>
-        <?php endforeach; ?>
+            <span class="stat__value">
+                <?= $escape(
+                    $formatMoney(
+                        (int) $calculation['total_budget_cents']
+                    )
+                ) ?>
+            </span>
 
-        </tbody>
-    </table>
+        </div>
 
-<?php endif; ?>
+        <div class="stat">
+
+            <span class="stat__label">
+                Bestellschluss für den Folgetag
+            </span>
+
+            <span class="stat__value">
+                <?= $escape(
+                    substr(
+                        (string) $settings['order_cutoff_time'],
+                        0,
+                        5
+                    )
+                ) ?>
+                Uhr
+            </span>
+
+        </div>
+
+    </div>
+
+    <section class="panel">
+
+        <div class="panel__header">
+
+            <div>
+
+                <h2>Übersicht</h2>
+
+                <span class="small-muted">
+                    Bestellschluss ist jeweils am Vortag.
+                </span>
+
+            </div>
+
+        </div>
+
+        <?php if ($days === []): ?>
+
+            <div class="empty-state">
+                Für diese Gruppe sind keine Liefertage mit
+                Teilnehmern konfiguriert.
+            </div>
+
+        <?php else: ?>
+
+            <div class="table-wrap">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Datum</th>
+                            <th>Abschnitt</th>
+                            <th>Tagesbudget</th>
+                            <th>Bestellschluss</th>
+                            <th>Status</th>
+                            <th>Aktion</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                    <?php foreach ($days as $entry): ?>
+
+                        <?php
+                        $day = $entry['budget_day'];
+                        $order = $entry['order'];
+                        $cutoff = $entry['cutoff'];
+
+                        $isOpen =
+                            (bool) $cutoff['is_open'];
+
+                        $target = null;
+                        $linkLabel = null;
+
+                        $badgeClass =
+                            'badge--neutral';
+
+                        if (
+                            $order !== null
+                            && $order['status'] === 'submitted'
+                        ) {
+                            $status = 'Bestätigt';
+
+                            $badgeClass =
+                                'badge--success';
+
+                            $target =
+                                '/group/review.php?date=';
+
+                            $linkLabel =
+                                'Bestellung anzeigen';
+                        } elseif (!$isOpen) {
+                            if ($order !== null) {
+                                $status =
+                                    'Entwurf – Frist vorbei';
+
+                                $badgeClass =
+                                    'badge--warning';
+
+                                $target =
+                                    '/group/review.php?date=';
+
+                                $linkLabel =
+                                    'Entwurf anzeigen';
+                            } else {
+                                $status =
+                                    'Nicht bestellt';
+
+                                $badgeClass =
+                                    'badge--danger';
+                            }
+                        } elseif ($order !== null) {
+                            $status = 'Entwurf';
+
+                            $badgeClass =
+                                'badge--warning';
+
+                            $target =
+                                '/group/order.php?date=';
+
+                            $linkLabel =
+                                'Entwurf fortsetzen';
+                        } else {
+                            $status = 'Offen';
+
+                            $badgeClass =
+                                'badge--info';
+
+                            $target =
+                                '/group/order.php?date=';
+
+                            $linkLabel =
+                                'Bestellung erfassen';
+                        }
+                        ?>
+
+                        <tr>
+
+                            <td>
+
+                                <strong>
+                                    <?= $escape(
+                                        $formatDate(
+                                            (string) $day['date']
+                                        )
+                                    ) ?>
+                                </strong>
+
+                            </td>
+
+                            <td>
+                                <?= $escape(
+                                    implode(
+                                        ' + ',
+                                        $day['labels']
+                                    )
+                                ) ?>
+                            </td>
+
+                            <td class="numeric">
+                                <?= $escape(
+                                    $formatMoney(
+                                        (int) $day['budget_cents']
+                                    )
+                                ) ?>
+                            </td>
+
+                            <td>
+                                <?= $escape(
+                                    $formatDateTime(
+                                        $cutoff['deadline']
+                                    )
+                                ) ?>
+                            </td>
+
+                            <td>
+
+                                <span
+                                    class="badge <?= $badgeClass ?>"
+                                >
+                                    <?= $escape($status) ?>
+                                </span>
+
+                            </td>
+
+                            <td class="actions-cell">
+
+                                <?php if (
+                                    $target !== null
+                                    && $linkLabel !== null
+                                ): ?>
+
+                                    <a
+                                        class="button button--small"
+                                        href="<?= $escape(
+                                            $target
+                                            . rawurlencode(
+                                                (string) $day['date']
+                                            )
+                                        ) ?>"
+                                    >
+                                        <?= $escape($linkLabel) ?>
+                                    </a>
+
+                                <?php else: ?>
+
+                                    <span
+                                        class="badge badge--neutral"
+                                    >
+                                        Geschlossen
+                                    </span>
+
+                                <?php endif; ?>
+
+                            </td>
+
+                        </tr>
+
+                    <?php endforeach; ?>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        <?php endif; ?>
+
+    </section>
+
+</main>
 
 </body>
 </html>
