@@ -18,302 +18,270 @@ $fieldError = static function (
         return '';
     }
 
-    return '<p>'
+    return '<p class="field-error">'
         . $escape($errors[$field])
         . '</p>';
 };
 
+$adminPageTitle = 'Einstellungen';
+$adminActiveSection = 'settings';
+
+require __DIR__ . '/partials/layout_start.php';
+
 ?>
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<div class="page-header">
 
-    <title>
-        Einstellungen –
-        <?= $escape($settings['camp_name']) ?>
-    </title>
-</head>
+    <div class="page-header__copy">
 
-<body>
+        <p class="eyebrow">
+            Konfiguration
+        </p>
 
-<h1>Einstellungen</h1>
+        <h1>Einstellungen</h1>
+
+        <p class="lead">
+            Lagername, Bestellschluss, Budgetansätze und
+            Lagerzeiträume konfigurieren.
+        </p>
+
+    </div>
+
+</div>
 
 <?php if ($saved): ?>
-    <p>
+
+    <div class="alert alert--success">
         Einstellungen wurden gespeichert.
-    </p>
+    </div>
+
 <?php endif; ?>
 
-<form method="post">
+<form
+    class="admin-form"
+    method="post"
+>
 
-    <h2>Allgemein</h2>
+    <section class="form-section">
 
-    <p>
-        <label for="camp_name">
-            Lagername
-        </label>
-        <br>
+        <div class="form-section__header">
 
-        <input
-            type="text"
-            id="camp_name"
-            name="camp_name"
-            value="<?= $escape($settings['camp_name']) ?>"
-            required
-        >
+            <h2>Allgemein</h2>
 
-        <?= $fieldError('camp_name', $errors) ?>
-    </p>
+        </div>
 
+        <div class="form-grid">
 
-    <p>
-        <label for="order_cutoff_time">
-            Bestellschluss für den Folgetag
-        </label>
-        <br>
+            <div class="field">
 
-        <input
-            type="time"
-            id="order_cutoff_time"
-            name="order_cutoff_time"
-            value="<?= $escape(
-                substr(
-                    (string) $settings['order_cutoff_time'],
-                    0,
-                    5
-                )
-            ) ?>"
-            required
-        >
+                <label for="camp_name">
+                    Lagername
+                </label>
 
-        <?= $fieldError('order_cutoff_time', $errors) ?>
-    </p>
+                <input
+                    type="text"
+                    id="camp_name"
+                    name="camp_name"
+                    value="<?= $escape(
+                        $settings['camp_name']
+                    ) ?>"
+                    required
+                >
 
+                <?= $fieldError(
+                    'camp_name',
+                    $errors
+                ) ?>
 
-    <h2>Budget</h2>
+            </div>
 
-    <p>
-        <label for="budget_full_day">
-            Betrag pro Person – ganzer Tag
-        </label>
-        <br>
+            <div class="field">
 
-        CHF
+                <label for="order_cutoff_time">
+                    Bestellschluss für den Folgetag
+                </label>
 
-        <input
-            type="number"
-            id="budget_full_day"
-            name="budget_full_day"
-            min="0"
-            step="0.01"
-            value="<?= $escape($settings['budget_full_day']) ?>"
-            required
-        >
+                <input
+                    type="time"
+                    id="order_cutoff_time"
+                    name="order_cutoff_time"
+                    value="<?= $escape(
+                        substr(
+                            (string) $settings[
+                                'order_cutoff_time'
+                            ],
+                            0,
+                            5
+                        )
+                    ) ?>"
+                    required
+                >
 
-        <?= $fieldError('budget_full_day', $errors) ?>
-    </p>
+                <p class="field-help">
+                    Eine Lieferung für Dienstag schliesst
+                    beispielsweise am Montag zu dieser Uhrzeit.
+                </p>
 
+                <?= $fieldError(
+                    'order_cutoff_time',
+                    $errors
+                ) ?>
 
-    <p>
-        <label for="budget_half_day">
-            Betrag pro Person – halber Tag
-        </label>
-        <br>
+            </div>
 
-        CHF
+        </div>
 
-        <input
-            type="number"
-            id="budget_half_day"
-            name="budget_half_day"
-            min="0"
-            step="0.01"
-            value="<?= $escape($settings['budget_half_day']) ?>"
-            required
-        >
+    </section>
 
-        <?= $fieldError('budget_half_day', $errors) ?>
-    </p>
+    <section class="form-section">
 
+        <div class="form-section__header">
 
-    <p>
-        <label for="budget_visitor_day">
-            Betrag pro zusätzliche Person – Besuchstag
-        </label>
-        <br>
+            <h2>Budgetansätze</h2>
 
-        CHF
+            <p class="small-muted">
+                Beträge pro Person und Liefertag.
+            </p>
 
-        <input
-            type="number"
-            id="budget_visitor_day"
-            name="budget_visitor_day"
-            min="0"
-            step="0.01"
-            value="<?= $escape($settings['budget_visitor_day']) ?>"
-            required
-        >
+        </div>
 
-        <?= $fieldError('budget_visitor_day', $errors) ?>
-    </p>
+        <div class="form-grid form-grid--three">
 
+            <?php
+            $budgetFields = [
+                'budget_full_day' => [
+                    'Ganzer Tag',
+                    'Betrag pro Person für einen ganzen Tag',
+                ],
+                'budget_half_day' => [
+                    'Halber Tag',
+                    'Betrag pro Person für einen halben Tag',
+                ],
+                'budget_visitor_day' => [
+                    'Besuchstag',
+                    'Betrag pro zusätzlicher Person am Besuchstag',
+                ],
+            ];
+            ?>
 
-    <h2>Zeiträume</h2>
+            <?php foreach (
+                $budgetFields
+                as $field => [$label, $help]
+            ): ?>
 
+                <div class="field">
 
-    <p>
-        <label for="arrival_date">
-            Anreisetag
-        </label>
-        <br>
+                    <label for="<?= $escape($field) ?>">
+                        <?= $escape($label) ?>
+                    </label>
 
-        <input
-            type="date"
-            id="arrival_date"
-            name="arrival_date"
-            value="<?= $escape($settings['arrival_date']) ?>"
-        >
+                    <div class="input-prefix">
 
-        <?= $fieldError('arrival_date', $errors) ?>
-    </p>
+                        <span class="input-prefix__label">
+                            CHF
+                        </span>
 
+                        <input
+                            type="number"
+                            id="<?= $escape($field) ?>"
+                            name="<?= $escape($field) ?>"
+                            min="0"
+                            step="0.01"
+                            value="<?= $escape(
+                                $settings[$field]
+                            ) ?>"
+                            required
+                        >
 
-    <p>
-        <label for="week1_start_date">
-            Beginn erste Woche
-        </label>
-        <br>
+                    </div>
 
-        <input
-            type="date"
-            id="week1_start_date"
-            name="week1_start_date"
-            value="<?= $escape($settings['week1_start_date']) ?>"
-        >
+                    <p class="field-help">
+                        <?= $escape($help) ?>
+                    </p>
 
-        <?= $fieldError('week1_start_date', $errors) ?>
-    </p>
+                    <?= $fieldError(
+                        $field,
+                        $errors
+                    ) ?>
 
+                </div>
 
-    <p>
-        <label for="week1_end_date">
-            Ende erste Woche
-        </label>
-        <br>
+            <?php endforeach; ?>
 
-        <input
-            type="date"
-            id="week1_end_date"
-            name="week1_end_date"
-            value="<?= $escape($settings['week1_end_date']) ?>"
-        >
+        </div>
 
-        <?= $fieldError('week1_end_date', $errors) ?>
-    </p>
+    </section>
 
+    <section class="form-section">
 
-    <p>
-        <label for="week1_departure_date">
-            Abreisetag erste Woche
-        </label>
-        <br>
+        <div class="form-section__header">
 
-        <input
-            type="date"
-            id="week1_departure_date"
-            name="week1_departure_date"
-            value="<?= $escape(
-                $settings['week1_departure_date']
-            ) ?>"
-        >
+            <h2>Lagerzeiträume</h2>
 
-        <?= $fieldError('week1_departure_date', $errors) ?>
-    </p>
+            <p class="small-muted">
+                Leere Felder sind möglich, solange der betreffende
+                Lagerabschnitt nicht verwendet wird.
+            </p>
 
+        </div>
 
-    <p>
-        <label for="visitor_date">
-            Besuchstag
-        </label>
-        <br>
+        <?php
+        $dateFields = [
+            'arrival_date' => 'Anreisetag',
+            'week1_start_date' => 'Beginn erste Woche',
+            'week1_end_date' => 'Ende erste Woche',
+            'week1_departure_date' => 'Abreisetag erste Woche',
+            'visitor_date' => 'Besuchstag',
+            'week2_start_date' => 'Beginn zweite Woche',
+            'week2_end_date' => 'Ende zweite Woche',
+            'week2_departure_date' => 'Abreisetag zweite Woche',
+        ];
+        ?>
 
-        <input
-            type="date"
-            id="visitor_date"
-            name="visitor_date"
-            value="<?= $escape($settings['visitor_date']) ?>"
-        >
+        <div class="form-grid">
 
-        <?= $fieldError('visitor_date', $errors) ?>
-    </p>
+            <?php foreach (
+                $dateFields
+                as $field => $label
+            ): ?>
 
+                <div class="field">
 
-    <p>
-        <label for="week2_start_date">
-            Beginn zweite Woche
-        </label>
-        <br>
+                    <label for="<?= $escape($field) ?>">
+                        <?= $escape($label) ?>
+                    </label>
 
-        <input
-            type="date"
-            id="week2_start_date"
-            name="week2_start_date"
-            value="<?= $escape($settings['week2_start_date']) ?>"
-        >
+                    <input
+                        type="date"
+                        id="<?= $escape($field) ?>"
+                        name="<?= $escape($field) ?>"
+                        value="<?= $escape(
+                            $settings[$field]
+                        ) ?>"
+                    >
 
-        <?= $fieldError('week2_start_date', $errors) ?>
-    </p>
+                    <?= $fieldError(
+                        $field,
+                        $errors
+                    ) ?>
 
+                </div>
 
-    <p>
-        <label for="week2_end_date">
-            Ende zweite Woche
-        </label>
-        <br>
+            <?php endforeach; ?>
 
-        <input
-            type="date"
-            id="week2_end_date"
-            name="week2_end_date"
-            value="<?= $escape($settings['week2_end_date']) ?>"
-        >
+        </div>
 
-        <?= $fieldError('week2_end_date', $errors) ?>
-    </p>
+    </section>
 
+    <div class="form-actions">
 
-    <p>
-        <label for="week2_departure_date">
-            Abreisetag zweite Woche
-        </label>
-        <br>
-
-        <input
-            type="date"
-            id="week2_departure_date"
-            name="week2_departure_date"
-            value="<?= $escape(
-                $settings['week2_departure_date']
-            ) ?>"
-        >
-
-        <?= $fieldError('week2_departure_date', $errors) ?>
-    </p>
-
-
-    <p>
         <button type="submit">
             Einstellungen speichern
         </button>
-    </p>
+
+    </div>
 
 </form>
 
-</body>
-</html>
+<?php
+require __DIR__ . '/partials/layout_end.php';

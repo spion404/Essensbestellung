@@ -17,247 +17,318 @@ $fieldError = static function (
         return '';
     }
 
-    return '<p>'
+    return '<p class="field-error">'
         . $escape($errors[$field])
         . '</p>';
 };
 
+$adminPageTitle = 'Neue Gruppe';
+$adminActiveSection = 'groups';
+
+require dirname(__DIR__) . '/partials/layout_start.php';
+
 ?>
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
+<div class="page-header">
+
+    <div class="page-header__copy">
+
+        <p class="eyebrow">
+            Gruppen
+        </p>
+
+        <h1>Neue Gruppe</h1>
+
+        <p class="lead">
+            Zugangsdaten und Teilnehmerzahlen für eine neue
+            Lagergruppe erfassen.
+        </p>
+
+    </div>
+
+    <a
+        class="button button--secondary"
+        href="/admin/groups.php"
     >
-
-    <title>Neue Gruppe</title>
-</head>
-
-<body>
-
-<p>
-    <a href="/admin/groups.php">
-        ← Zurück zu den Gruppen
+        Zurück zu den Gruppen
     </a>
-</p>
 
-<h1>Neue Gruppe</h1>
+</div>
 
-<form method="post">
+<form
+    class="admin-form"
+    method="post"
+>
 
-    <h2>Allgemein</h2>
+    <section class="form-section">
 
-    <p>
-        <label for="name">
-            Gruppenname
-        </label>
-        <br>
+        <div class="form-section__header">
+            <h2>Allgemein</h2>
+            <p class="small-muted">
+                Name und Passwort für den Zugang der Gruppe.
+            </p>
+        </div>
 
-        <input
-            type="text"
-            id="name"
-            name="name"
-            maxlength="150"
-            value="<?= $escape($form['name']) ?>"
-            required
-        >
+        <div class="form-grid">
 
-        <?= $fieldError('name') ?>
-    </p>
+            <div class="field">
 
+                <label for="name">
+                    Gruppenname
+                </label>
 
-    <p>
-        <label for="password">
-            Gruppenpasswort
-        </label>
-        <br>
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    maxlength="150"
+                    value="<?= $escape($form['name']) ?>"
+                    required
+                >
 
-        <input
-            type="text"
-            id="password"
-            name="password"
-            value="<?= $escape($form['password']) ?>"
-            autocomplete="off"
-            required
-        >
+                <?= $fieldError('name') ?>
 
-        <?= $fieldError('password') ?>
-    </p>
+            </div>
 
+            <div class="field">
 
-    <h2>Teilnehmerzahlen</h2>
+                <label for="password">
+                    Gruppenpasswort
+                </label>
 
+                <input
+                    type="text"
+                    id="password"
+                    name="password"
+                    value="<?= $escape($form['password']) ?>"
+                    autocomplete="off"
+                    required
+                >
 
-    <p>
-        <label for="participants_arrival_half">
-            Anreisetag – halber Tag
-        </label>
-        <br>
+                <p class="field-help">
+                    Dieses Passwort verwendet die Gruppe zur
+                    Anmeldung im Bestellbereich.
+                </p>
 
-        <input
-            type="number"
-            id="participants_arrival_half"
-            name="participants_arrival_half"
-            min="0"
-            step="1"
-            value="<?= $escape(
-                $form['participants_arrival_half']
-            ) ?>"
-            required
-        >
+                <?= $fieldError('password') ?>
 
-        <?= $fieldError('participants_arrival_half') ?>
-    </p>
+            </div>
 
+        </div>
 
-    <p>
-        <label for="participants_week1_full">
-            Erste Woche – ganzer Tag
-        </label>
-        <br>
+    </section>
 
-        <input
-            type="number"
-            id="participants_week1_full"
-            name="participants_week1_full"
-            min="0"
-            step="1"
-            value="<?= $escape(
-                $form['participants_week1_full']
-            ) ?>"
-            required
-        >
+    <section class="form-section">
 
-        <?= $fieldError('participants_week1_full') ?>
-    </p>
+        <div class="form-section__header">
+            <h2>Teilnehmerzahlen</h2>
+            <p class="small-muted">
+                Diese Werte werden später pro Liefertag in
+                Budget und Personenanzahl eingerechnet.
+            </p>
+        </div>
 
+        <div class="form-grid form-grid--three">
 
-    <p>
-        <label for="participants_week1_departure_half">
-            Abreisetag erste Woche – halber Tag
-        </label>
-        <br>
+            <div class="field">
 
-        <input
-            type="number"
-            id="participants_week1_departure_half"
-            name="participants_week1_departure_half"
-            min="0"
-            step="1"
-            value="<?= $escape(
-                $form['participants_week1_departure_half']
-            ) ?>"
-            required
-        >
+                <label for="participants_arrival_half">
+                    Anreisetag – halber Tag
+                </label>
 
-        <?= $fieldError(
-            'participants_week1_departure_half'
-        ) ?>
-    </p>
+                <input
+                    type="number"
+                    id="participants_arrival_half"
+                    name="participants_arrival_half"
+                    min="0"
+                    step="1"
+                    value="<?= $escape(
+                        $form['participants_arrival_half']
+                    ) ?>"
+                    required
+                >
 
+                <?= $fieldError(
+                    'participants_arrival_half'
+                ) ?>
 
-    <p>
-        <label for="participants_week1_departure_full">
-            Abreisetag erste Woche – ganzer Tag
-        </label>
-        <br>
+            </div>
 
-        <input
-            type="number"
-            id="participants_week1_departure_full"
-            name="participants_week1_departure_full"
-            min="0"
-            step="1"
-            value="<?= $escape(
-                $form['participants_week1_departure_full']
-            ) ?>"
-            required
-        >
+            <div class="field">
 
-        <?= $fieldError(
-            'participants_week1_departure_full'
-        ) ?>
-    </p>
+                <label for="participants_week1_full">
+                    Erste Woche – ganzer Tag
+                </label>
 
+                <input
+                    type="number"
+                    id="participants_week1_full"
+                    name="participants_week1_full"
+                    min="0"
+                    step="1"
+                    value="<?= $escape(
+                        $form['participants_week1_full']
+                    ) ?>"
+                    required
+                >
 
-    <p>
-        <label for="participants_visitors">
-            Zusätzliche Personen am Besuchstag
-        </label>
-        <br>
+                <?= $fieldError(
+                    'participants_week1_full'
+                ) ?>
 
-        <input
-            type="number"
-            id="participants_visitors"
-            name="participants_visitors"
-            min="0"
-            step="1"
-            value="<?= $escape(
-                $form['participants_visitors']
-            ) ?>"
-            required
-        >
+            </div>
 
-        <?= $fieldError('participants_visitors') ?>
-    </p>
+            <div class="field">
 
+                <label for="participants_week1_departure_half">
+                    Abreise Woche 1 – halber Tag
+                </label>
 
-    <p>
-        <label for="participants_week2_full">
-            Zweite Woche – ganzer Tag
-        </label>
-        <br>
+                <input
+                    type="number"
+                    id="participants_week1_departure_half"
+                    name="participants_week1_departure_half"
+                    min="0"
+                    step="1"
+                    value="<?= $escape(
+                        $form[
+                            'participants_week1_departure_half'
+                        ]
+                    ) ?>"
+                    required
+                >
 
-        <input
-            type="number"
-            id="participants_week2_full"
-            name="participants_week2_full"
-            min="0"
-            step="1"
-            value="<?= $escape(
-                $form['participants_week2_full']
-            ) ?>"
-            required
-        >
+                <?= $fieldError(
+                    'participants_week1_departure_half'
+                ) ?>
 
-        <?= $fieldError('participants_week2_full') ?>
-    </p>
+            </div>
 
+            <div class="field">
 
-    <p>
-        <label for="participants_week2_departure_half">
-            Abreisetag zweite Woche – halber Tag
-        </label>
-        <br>
+                <label for="participants_week1_departure_full">
+                    Abreise Woche 1 – ganzer Tag
+                </label>
 
-        <input
-            type="number"
-            id="participants_week2_departure_half"
-            name="participants_week2_departure_half"
-            min="0"
-            step="1"
-            value="<?= $escape(
-                $form['participants_week2_departure_half']
-            ) ?>"
-            required
-        >
+                <input
+                    type="number"
+                    id="participants_week1_departure_full"
+                    name="participants_week1_departure_full"
+                    min="0"
+                    step="1"
+                    value="<?= $escape(
+                        $form[
+                            'participants_week1_departure_full'
+                        ]
+                    ) ?>"
+                    required
+                >
 
-        <?= $fieldError(
-            'participants_week2_departure_half'
-        ) ?>
-    </p>
+                <?= $fieldError(
+                    'participants_week1_departure_full'
+                ) ?>
 
+            </div>
 
-    <p>
+            <div class="field">
+
+                <label for="participants_visitors">
+                    Zusätzliche Personen am Besuchstag
+                </label>
+
+                <input
+                    type="number"
+                    id="participants_visitors"
+                    name="participants_visitors"
+                    min="0"
+                    step="1"
+                    value="<?= $escape(
+                        $form['participants_visitors']
+                    ) ?>"
+                    required
+                >
+
+                <p class="field-help">
+                    Diese Personen kommen am definierten Besuchstag
+                    zusätzlich zu den normalen Teilnehmern dazu.
+                </p>
+
+                <?= $fieldError(
+                    'participants_visitors'
+                ) ?>
+
+            </div>
+
+            <div class="field">
+
+                <label for="participants_week2_full">
+                    Zweite Woche – ganzer Tag
+                </label>
+
+                <input
+                    type="number"
+                    id="participants_week2_full"
+                    name="participants_week2_full"
+                    min="0"
+                    step="1"
+                    value="<?= $escape(
+                        $form['participants_week2_full']
+                    ) ?>"
+                    required
+                >
+
+                <?= $fieldError(
+                    'participants_week2_full'
+                ) ?>
+
+            </div>
+
+            <div class="field">
+
+                <label for="participants_week2_departure_half">
+                    Abreise Woche 2 – halber Tag
+                </label>
+
+                <input
+                    type="number"
+                    id="participants_week2_departure_half"
+                    name="participants_week2_departure_half"
+                    min="0"
+                    step="1"
+                    value="<?= $escape(
+                        $form[
+                            'participants_week2_departure_half'
+                        ]
+                    ) ?>"
+                    required
+                >
+
+                <?= $fieldError(
+                    'participants_week2_departure_half'
+                ) ?>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <div class="form-actions">
+
         <button type="submit">
             Gruppe erstellen
         </button>
-    </p>
+
+        <a
+            class="button button--secondary"
+            href="/admin/groups.php"
+        >
+            Abbrechen
+        </a>
+
+    </div>
 
 </form>
 
-</body>
-</html>
+<?php
+require dirname(__DIR__) . '/partials/layout_end.php';

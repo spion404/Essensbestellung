@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-$escape = static function (
-    mixed $value
-): string {
+$escape = static function (mixed $value): string {
     return htmlspecialchars(
         (string) $value,
         ENT_QUOTES,
@@ -14,242 +12,262 @@ $escape = static function (
 
 $fieldError = static function (
     string $field
-) use (
-    $errors,
-    $escape
-): string {
-    if (
-        !isset(
-            $errors[$field]
-        )
-    ) {
+) use ($errors, $escape): string {
+    if (!isset($errors[$field])) {
         return '';
     }
 
-    return '<p>'
-        . $escape(
-            $errors[$field]
-        )
+    return '<p class="field-error">'
+        . $escape($errors[$field])
         . '</p>';
 };
 
+$adminPageTitle =
+    'Produkt bearbeiten – '
+    . (string) $form['name'];
+
+$adminActiveSection = 'products';
+
+require dirname(__DIR__) . '/partials/layout_start.php';
+
 ?>
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
+<div class="page-header">
+
+    <div class="page-header__copy">
+
+        <p class="eyebrow">
+            Produkte
+        </p>
+
+        <h1>Produkt bearbeiten</h1>
+
+        <p class="lead">
+            <?= $escape($form['name']) ?>
+        </p>
+
+    </div>
+
+    <a
+        class="button button--secondary"
+        href="/admin/products.php"
     >
-
-    <title>
-        Produkt bearbeiten –
-        <?= $escape(
-            $form['name']
-        ) ?>
-    </title>
-</head>
-
-<body>
-
-<p>
-    <a href="/admin/products.php">
-        ← Zurück zu den Produkten
+        Zurück zu den Produkten
     </a>
-</p>
 
-<h1>Produkt bearbeiten</h1>
+</div>
 
-<form method="post">
+<form
+    class="admin-form"
+    method="post"
+>
 
-    <p>
-        <label for="article_number">
-            Artikelnummer
-        </label>
-        <br>
+    <section class="form-section">
 
-        <input
-            type="text"
-            id="article_number"
-            name="article_number"
-            maxlength="100"
-            value="<?= $escape(
-                $form['article_number']
-            ) ?>"
-        >
+        <div class="form-section__header">
 
-        <br>
+            <h2>Produktdaten</h2>
 
-        <small>
-            Optional bei manueller
-            Erfassung.
-        </small>
-
-        <?= $fieldError(
-            'article_number'
-        ) ?>
-    </p>
-
-    <p>
-        <label for="name">
-            Produktname
-        </label>
-        <br>
-
-        <input
-            type="text"
-            id="name"
-            name="name"
-            maxlength="200"
-            value="<?= $escape(
-                $form['name']
-            ) ?>"
-            required
-        >
-
-        <?= $fieldError('name') ?>
-    </p>
-
-    <p>
-        <label for="unit">
-            Einheit
-        </label>
-        <br>
-
-        <input
-            type="text"
-            id="unit"
-            name="unit"
-            maxlength="50"
-            value="<?= $escape(
-                $form['unit']
-            ) ?>"
-        >
-
-        <?= $fieldError('unit') ?>
-    </p>
-
-    <p>
-        <label for="price">
-            Preis
-        </label>
-        <br>
-
-        <input
-            type="text"
-            id="price"
-            name="price"
-            inputmode="decimal"
-            placeholder="0.00"
-            value="<?= $escape(
-                $form['price']
-            ) ?>"
-            required
-        >
-
-        <?= $fieldError('price') ?>
-    </p>
-
-    <p>
-        <label for="remark">
-            Bemerkung
-        </label>
-        <br>
-
-        <textarea
-            id="remark"
-            name="remark"
-            rows="4"
-            cols="50"
-        ><?= $escape(
-            $form['remark']
-        ) ?></textarea>
-    </p>
-
-    <fieldset>
-        <legend>Kategorien</legend>
-
-        <?php if (
-            $categories === []
-        ): ?>
-
-            <p>
-                Es wurden noch keine
-                Kategorien erstellt.
+            <p class="small-muted">
+                Preis und Einheit beziehen sich auf eine bestellbare
+                Packung.
             </p>
 
-            <p>
-                Das Produkt kann trotzdem
-                ohne Kategorie gespeichert
+        </div>
+
+        <div class="form-grid">
+
+            <div class="field field--full">
+
+                <label for="name">
+                    Produktname
+                </label>
+
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    maxlength="200"
+                    value="<?= $escape($form['name']) ?>"
+                    required
+                >
+
+                <?= $fieldError('name') ?>
+
+            </div>
+
+            <div class="field">
+
+                <label for="unit">
+                    Einheit / Packungsgrösse
+                </label>
+
+                <input
+                    type="text"
+                    id="unit"
+                    name="unit"
+                    maxlength="50"
+                    value="<?= $escape($form['unit']) ?>"
+                    placeholder="z. B. 500 g, 1 l, 12 Stück"
+                >
+
+                <?= $fieldError('unit') ?>
+
+            </div>
+
+            <div class="field">
+
+                <label for="price">
+                    Preis pro Packung
+                </label>
+
+                <div class="input-prefix">
+
+                    <span class="input-prefix__label">
+                        CHF
+                    </span>
+
+                    <input
+                        type="text"
+                        id="price"
+                        name="price"
+                        inputmode="decimal"
+                        placeholder="0.00"
+                        value="<?= $escape($form['price']) ?>"
+                        required
+                    >
+
+                </div>
+
+                <?= $fieldError('price') ?>
+
+            </div>
+
+            <div class="field field--full">
+
+                <label for="remark">
+                    Bemerkung
+                </label>
+
+                <textarea
+                    id="remark"
+                    name="remark"
+                    rows="4"
+                    placeholder="Optionale Hinweise zum Produkt"
+                ><?= $escape($form['remark']) ?></textarea>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="form-section">
+
+        <div class="form-section__header">
+
+            <h2>Kategorien</h2>
+
+            <p class="small-muted">
+                Ein Produkt kann mehreren Kategorien zugeordnet
                 werden.
             </p>
 
-            <p>
+        </div>
+
+        <fieldset class="form-fieldset">
+
+            <legend class="visually-hidden">
+                Kategorien auswählen
+            </legend>
+
+            <?php if ($categories === []): ?>
+
+                <div class="alert alert--info">
+
+                    Es wurden noch keine Kategorien erstellt.
+                    Das Produkt kann trotzdem ohne Kategorie
+                    gespeichert werden.
+
+                </div>
+
                 <a
+                    class="button button--secondary"
                     href="/admin/categories/create.php"
                 >
                     Kategorie erstellen
                 </a>
-            </p>
 
-        <?php else: ?>
+            <?php else: ?>
 
-            <?php foreach (
-                $categories
-                as $category
-            ): ?>
+                <div class="checkbox-grid">
 
-                <?php
-                $categoryId =
-                    (int) $category['id'];
+                    <?php foreach (
+                        $categories
+                        as $category
+                    ): ?>
 
-                $checked =
-                    in_array(
-                        $categoryId,
-                        $form[
-                            'category_ids'
-                        ],
-                        true
-                    );
-                ?>
+                        <?php
+                        $categoryId =
+                            (int) $category['id'];
 
-                <p>
-                    <label>
-                        <input
-                            type="checkbox"
-                            name="category_ids[]"
-                            value="<?= $categoryId ?>"
-                            <?= $checked
-                                ? 'checked'
-                                : ''
-                            ?>
-                        >
+                        $checked = in_array(
+                            $categoryId,
+                            $form['category_ids'],
+                            true
+                        );
+                        ?>
 
-                        <?= $escape(
-                            $category['name']
-                        ) ?>
-                    </label>
-                </p>
+                        <label class="checkbox-card">
 
-            <?php endforeach; ?>
+                            <input
+                                type="checkbox"
+                                name="category_ids[]"
+                                value="<?= $categoryId ?>"
+                                <?= $checked
+                                    ? 'checked'
+                                    : ''
+                                ?>
+                            >
 
-        <?php endif; ?>
+                            <span class="choice-copy">
+                                <strong>
+                                    <?= $escape(
+                                        $category['name']
+                                    ) ?>
+                                </strong>
+                            </span>
 
-        <?= $fieldError(
-            'categories'
-        ) ?>
+                        </label>
 
-    </fieldset>
+                    <?php endforeach; ?>
 
-    <p>
+                </div>
+
+            <?php endif; ?>
+
+            <?= $fieldError('categories') ?>
+
+        </fieldset>
+
+    </section>
+
+    <div class="form-actions">
+
         <button type="submit">
             Änderungen speichern
         </button>
-    </p>
+
+        <a
+            class="button button--secondary"
+            href="/admin/products.php"
+        >
+            Abbrechen
+        </a>
+
+    </div>
 
 </form>
 
-</body>
-</html>
+<?php
+require dirname(__DIR__) . '/partials/layout_end.php';

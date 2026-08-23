@@ -56,249 +56,386 @@ $budgetVisitorDayCents = (int) round(
     ((float) $settings['budget_visitor_day']) * 100
 );
 
+$adminPageTitle = 'Tagesbudgets';
+$adminActiveSection = 'budgets';
+
+require __DIR__ . '/partials/layout_start.php';
+
 ?>
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<div class="page-header">
 
-    <title>
-        Tagesbudgets – <?= $escape($settings['camp_name']) ?>
-    </title>
-</head>
+    <div class="page-header__copy">
 
-<body>
+        <p class="eyebrow">
+            Budgetkontrolle
+        </p>
 
-<h1>Tagesbudgets</h1>
+        <h1>Tagesbudgets</h1>
 
-<p>
-    <strong><?= $escape($settings['camp_name']) ?></strong>
-</p>
+        <p class="lead">
+            Berechnete Budgets für
+            <strong><?= $escape($settings['camp_name']) ?></strong>
+            auf Basis der aktuellen Teilnehmerzahlen.
+        </p>
 
-<p>
-    <a href="/admin/groups.php">Gruppen</a>
-    |
-    <a href="/admin/settings.php">Einstellungen</a>
-</p>
+    </div>
 
-<h2>Budgetansätze</h2>
+    <div class="toolbar">
 
-<table>
-    <thead>
-        <tr>
-            <th>Ansatz</th>
-            <th>Betrag pro Person</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>Ganzer Tag</td>
-            <td><?= $escape($formatMoney($budgetFullDayCents)) ?></td>
-        </tr>
-        <tr>
-            <td>Halber Tag</td>
-            <td><?= $escape($formatMoney($budgetHalfDayCents)) ?></td>
-        </tr>
-        <tr>
-            <td>Zusätzliche Person am Besuchstag</td>
-            <td><?= $escape($formatMoney($budgetVisitorDayCents)) ?></td>
-        </tr>
-    </tbody>
-</table>
+        <a
+            class="button button--secondary"
+            href="/admin/groups.php"
+        >
+            Gruppen
+        </a>
 
-<p>
-    Der Besuchstag wird additiv berechnet:
-    Die normalen Teilnehmer des betreffenden Tages bleiben bestehen,
-    die Besucher kommen zusätzlich dazu.
-</p>
+        <a
+            class="button button--secondary"
+            href="/admin/settings.php"
+        >
+            Budgetansätze
+        </a>
+
+    </div>
+
+</div>
+
+<div class="stats">
+
+    <div class="stat">
+
+        <span class="stat__label">
+            Ganzer Tag / Person
+        </span>
+
+        <span class="stat__value">
+            <?= $escape(
+                $formatMoney($budgetFullDayCents)
+            ) ?>
+        </span>
+
+    </div>
+
+    <div class="stat">
+
+        <span class="stat__label">
+            Halber Tag / Person
+        </span>
+
+        <span class="stat__value">
+            <?= $escape(
+                $formatMoney($budgetHalfDayCents)
+            ) ?>
+        </span>
+
+    </div>
+
+    <div class="stat">
+
+        <span class="stat__label">
+            Besuchstag / zusätzliche Person
+        </span>
+
+        <span class="stat__value">
+            <?= $escape(
+                $formatMoney($budgetVisitorDayCents)
+            ) ?>
+        </span>
+
+    </div>
+
+    <?php if ($calculationError === null): ?>
+
+        <div class="stat stat--success">
+
+            <span class="stat__label">
+                Gesamtbudget Lager
+            </span>
+
+            <span class="stat__value">
+                <?= $escape(
+                    $formatMoney($campTotalBudgetCents)
+                ) ?>
+            </span>
+
+        </div>
+
+    <?php endif; ?>
+
+</div>
+
+<div class="alert alert--info">
+    Der Besuchstag wird additiv berechnet: Die normalen Teilnehmer
+    des Tages bleiben bestehen, Besucher kommen zusätzlich dazu.
+</div>
 
 <?php if ($calculationError !== null): ?>
 
-    <h2>Berechnung nicht möglich</h2>
+    <div class="alert alert--danger">
 
-    <p>
+        <strong>
+            Berechnung nicht möglich:
+        </strong>
+
         <?= $escape($calculationError) ?>
-    </p>
 
-    <p>
-        Bitte prüfe die Datumsangaben in den
-        <a href="/admin/settings.php">Einstellungen</a>.
-    </p>
+        Bitte prüfe die Datumsangaben in den Einstellungen.
+
+    </div>
 
 <?php elseif ($groupBudgets === []): ?>
 
-    <p>
-        Es wurden noch keine Gruppen erfasst.
-    </p>
+    <section class="panel">
+
+        <div class="empty-state">
+            Es wurden noch keine Gruppen erfasst.
+        </div>
+
+    </section>
 
 <?php else: ?>
 
-    <h2>Übersicht aller Gruppen</h2>
+    <section class="panel">
 
-    <table>
-        <thead>
-            <tr>
-                <th>Gruppe</th>
-                <th>Lagerbudget</th>
-                <th>Details</th>
-            </tr>
-        </thead>
+        <div class="panel__header">
 
-        <tbody>
+            <div>
 
-        <?php foreach ($groupBudgets as $groupBudget): ?>
-            <tr>
-                <td>
-                    <?= $escape($groupBudget['group']['name']) ?>
-                </td>
+                <h2>Übersicht aller Gruppen</h2>
 
-                <td>
-                    <?= $escape(
-                        $formatMoney(
-                            (int) $groupBudget[
-                                'calculation'
-                            ][
-                                'total_budget_cents'
-                            ]
-                        )
-                    ) ?>
-                </td>
+                <span class="small-muted">
+                    Lagerbudget pro Gruppe
+                </span>
 
-                <td>
-                    <a
-                        href="/admin/budgets.php?group_id=<?= (int) $groupBudget['group']['id'] ?>"
-                    >
-                        Tagesbudget anzeigen
-                    </a>
-                </td>
-            </tr>
-        <?php endforeach; ?>
+            </div>
 
-        </tbody>
+        </div>
 
-        <tfoot>
-            <tr>
-                <th>Gesamt</th>
-                <th>
-                    <?= $escape(
-                        $formatMoney($campTotalBudgetCents)
-                    ) ?>
-                </th>
-                <th></th>
-            </tr>
-        </tfoot>
-    </table>
-
-    <?php if ($selectedGroupBudget !== null): ?>
-
-        <h2>
-            Tagesdetails:
-            <?= $escape($selectedGroupBudget['group']['name']) ?>
-        </h2>
-
-        <?php if (
-            $selectedGroupBudget['calculation']['days'] === []
-        ): ?>
-
-            <p>
-                Für diese Gruppe konnten noch keine Tagesbudgets
-                berechnet werden. Prüfe, ob in den Einstellungen
-                die Lagerdaten erfasst sind.
-            </p>
-
-        <?php else: ?>
+        <div class="table-wrap">
 
             <table>
+
                 <thead>
                     <tr>
-                        <th>Datum</th>
-                        <th>Abschnitt</th>
-                        <th>Ganze Personen</th>
-                        <th>Halbe Personen</th>
-                        <th>Besucher</th>
-                        <th>Tagesbudget</th>
+                        <th>Gruppe</th>
+                        <th>Lagerbudget</th>
+                        <th>Details</th>
                     </tr>
                 </thead>
 
                 <tbody>
 
                 <?php foreach (
-                    $selectedGroupBudget['calculation']['days']
-                    as $day
+                    $groupBudgets
+                    as $groupBudget
                 ): ?>
+
                     <tr>
-                        <td>
-                            <?= $escape(
-                                $formatDate($day['date'])
-                            ) ?>
-                        </td>
 
                         <td>
-                            <?= $escape(
-                                implode(' + ', $day['labels'])
-                            ) ?>
+                            <strong>
+                                <?= $escape(
+                                    $groupBudget[
+                                        'group'
+                                    ]['name']
+                                ) ?>
+                            </strong>
                         </td>
 
-                        <td>
-                            <?= (int) $day['full_participants'] ?>
-                        </td>
-
-                        <td>
-                            <?= (int) $day['half_participants'] ?>
-                        </td>
-
-                        <td>
-                            <?= (int) $day['visitor_participants'] ?>
-                        </td>
-
-                        <td>
+                        <td class="numeric">
                             <?= $escape(
                                 $formatMoney(
-                                    (int) $day['budget_cents']
-                                )
-                            ) ?>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-
-                </tbody>
-
-                <tfoot>
-                    <tr>
-                        <th colspan="5">
-                            Lagerbudget
-                        </th>
-                        <th>
-                            <?= $escape(
-                                $formatMoney(
-                                    (int) $selectedGroupBudget[
+                                    (int) $groupBudget[
                                         'calculation'
                                     ][
                                         'total_budget_cents'
                                     ]
                                 )
                             ) ?>
+                        </td>
+
+                        <td class="actions-cell">
+
+                            <a
+                                class="button button--secondary button--small"
+                                href="/admin/budgets.php?group_id=<?= (int) $groupBudget['group']['id'] ?>"
+                            >
+                                Tagesdetails
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                <?php endforeach; ?>
+
+                </tbody>
+
+                <tfoot>
+                    <tr>
+                        <th>Gesamt</th>
+                        <th class="numeric">
+                            <?= $escape(
+                                $formatMoney(
+                                    $campTotalBudgetCents
+                                )
+                            ) ?>
                         </th>
+                        <th></th>
                     </tr>
                 </tfoot>
+
             </table>
 
-        <?php endif; ?>
+        </div>
 
-    <?php else: ?>
+    </section>
 
-        <p>
-            Die gewählte Gruppe wurde nicht gefunden.
-        </p>
+    <?php if ($selectedGroupBudget !== null): ?>
+
+        <section class="panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <h2>
+                        Tagesdetails:
+                        <?= $escape(
+                            $selectedGroupBudget[
+                                'group'
+                            ]['name']
+                        ) ?>
+                    </h2>
+
+                </div>
+
+            </div>
+
+            <?php if (
+                $selectedGroupBudget[
+                    'calculation'
+                ]['days'] === []
+            ): ?>
+
+                <div class="empty-state">
+                    Für diese Gruppe konnten noch keine Tagesbudgets
+                    berechnet werden.
+                </div>
+
+            <?php else: ?>
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Datum</th>
+                                <th>Abschnitt</th>
+                                <th>Ganze Personen</th>
+                                <th>Halbe Personen</th>
+                                <th>Besucher</th>
+                                <th>Tagesbudget</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                        <?php foreach (
+                            $selectedGroupBudget[
+                                'calculation'
+                            ]['days']
+                            as $day
+                        ): ?>
+
+                            <tr>
+
+                                <td>
+                                    <strong>
+                                        <?= $escape(
+                                            $formatDate(
+                                                $day['date']
+                                            )
+                                        ) ?>
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    <?= $escape(
+                                        implode(
+                                            ' + ',
+                                            $day['labels']
+                                        )
+                                    ) ?>
+                                </td>
+
+                                <td class="numeric">
+                                    <?= (int) $day[
+                                        'full_participants'
+                                    ] ?>
+                                </td>
+
+                                <td class="numeric">
+                                    <?= (int) $day[
+                                        'half_participants'
+                                    ] ?>
+                                </td>
+
+                                <td class="numeric">
+                                    <?= (int) $day[
+                                        'visitor_participants'
+                                    ] ?>
+                                </td>
+
+                                <td class="numeric">
+                                    <?= $escape(
+                                        $formatMoney(
+                                            (int) $day[
+                                                'budget_cents'
+                                            ]
+                                        )
+                                    ) ?>
+                                </td>
+
+                            </tr>
+
+                        <?php endforeach; ?>
+
+                        </tbody>
+
+                        <tfoot>
+                            <tr>
+                                <th colspan="5">
+                                    Lagerbudget
+                                </th>
+
+                                <th class="numeric">
+                                    <?= $escape(
+                                        $formatMoney(
+                                            (int) $selectedGroupBudget[
+                                                'calculation'
+                                            ][
+                                                'total_budget_cents'
+                                            ]
+                                        )
+                                    ) ?>
+                                </th>
+                            </tr>
+                        </tfoot>
+
+                    </table>
+
+                </div>
+
+            <?php endif; ?>
+
+        </section>
 
     <?php endif; ?>
 
 <?php endif; ?>
 
-</body>
-</html>
+<?php
+require __DIR__ . '/partials/layout_end.php';

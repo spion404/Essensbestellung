@@ -10,129 +10,187 @@ $escape = static function (mixed $value): string {
     );
 };
 
+$adminPageTitle = 'Gruppen';
+$adminActiveSection = 'groups';
+
+require __DIR__ . '/partials/layout_start.php';
+
 ?>
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<div class="page-header">
 
-    <title>Gruppen</title>
-</head>
+    <div class="page-header__copy">
 
-<body>
+        <p class="eyebrow">
+            Administration
+        </p>
 
-<h1>Gruppen</h1>
+        <h1>Gruppen</h1>
+
+        <p class="lead">
+            Gruppenpasswörter und Teilnehmerzahlen für die
+            Lagerabschnitte verwalten.
+        </p>
+
+    </div>
+
+    <div class="toolbar">
+
+        <a
+            class="button button--secondary"
+            href="/admin/budgets.php"
+        >
+            Tagesbudgets
+        </a>
+
+        <a
+            class="button"
+            href="/admin/groups/create.php"
+        >
+            Neue Gruppe
+        </a>
+
+    </div>
+
+</div>
 
 <?php if ($created): ?>
-    <p>
+
+    <div class="alert alert--success">
         Die Gruppe wurde erstellt.
-    </p>
+    </div>
+
 <?php endif; ?>
+
 <?php if ($updated): ?>
-    <p>
+
+    <div class="alert alert--success">
         Die Gruppe wurde aktualisiert.
-    </p>
-<?php endif; ?>
-
-<p>
-    <a href="/admin/groups/create.php">
-        Neue Gruppe erstellen
-    </a>
-    |
-    <a href="/admin/budgets.php">
-        Tagesbudgets anzeigen
-    </a>
-</p>
-
-<?php if ($groups === []): ?>
-
-    <p>
-        Es wurden noch keine Gruppen erfasst.
-    </p>
-
-<?php else: ?>
-    <table>
-        <thead>
-            <tr>
-                <th>Gruppe</th>
-                <th>Anreise ½</th>
-                <th>1. Woche ganz</th>
-                <th>Abreise Woche 1 ½</th>
-                <th>Abreise Woche 1 ganz</th>
-                <th>Besucher</th>
-                <th>2. Woche ganz</th>
-                <th>Abreise Woche 2 ½</th>
-                <th>Aktionen</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-        <?php foreach ($groups as $group): ?>
-            <tr>
-                <td>
-                    <?= $escape($group['name']) ?>
-                </td>
-
-                <td>
-                    <?= $escape(
-                        $group['participants_arrival_half']
-                    ) ?>
-                </td>
-
-                <td>
-                    <?= $escape(
-                        $group['participants_week1_full']
-                    ) ?>
-                </td>
-                <td>
-                    <?= $escape(
-                        $group['participants_week1_departure_half']
-                    ) ?>
-                </td>
-
-                <td>
-                    <?= $escape(
-                        $group['participants_week1_departure_full']
-                    ) ?>
-                </td>
-
-                <td>
-                    <?= $escape(
-                        $group['participants_visitors']
-                    ) ?>
-                </td>
-                <td>
-                    <?= $escape(
-                        $group['participants_week2_full']
-                    ) ?>
-                </td>
-
-                <td>
-                    <?= $escape(
-                        $group['participants_week2_departure_half']
-                    ) ?>
-                </td>
-                <td>
-                    <a
-                        href="/admin/groups/edit.php?id=<?= (int) $group['id'] ?>"
-                    >
-                        Bearbeiten
-                    </a>
-                </td>
-            </tr>
-
-        <?php endforeach; ?>
-
-        </tbody>
-    </table>
+    </div>
 
 <?php endif; ?>
 
-</body>
-</html>
+<section class="panel">
+
+    <div class="panel__header">
+
+        <div>
+
+            <h2>Erfasste Gruppen</h2>
+
+            <span class="small-muted">
+                Die Zahlen bilden die Grundlage für die
+                Tagesbudgets.
+            </span>
+
+        </div>
+
+    </div>
+
+    <?php if ($groups === []): ?>
+
+        <div class="empty-state">
+            Es wurden noch keine Gruppen erfasst.
+        </div>
+
+    <?php else: ?>
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Gruppe</th>
+                        <th>Anreise ½</th>
+                        <th>Woche 1</th>
+                        <th>Abreise W1 ½</th>
+                        <th>Abreise W1 ganz</th>
+                        <th>Besucher</th>
+                        <th>Woche 2</th>
+                        <th>Abreise W2 ½</th>
+                        <th>Aktion</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                <?php foreach ($groups as $group): ?>
+
+                    <tr>
+
+                        <td>
+                            <strong>
+                                <?= $escape($group['name']) ?>
+                            </strong>
+                        </td>
+
+                        <td class="numeric">
+                            <?= (int) $group[
+                                'participants_arrival_half'
+                            ] ?>
+                        </td>
+
+                        <td class="numeric">
+                            <?= (int) $group[
+                                'participants_week1_full'
+                            ] ?>
+                        </td>
+
+                        <td class="numeric">
+                            <?= (int) $group[
+                                'participants_week1_departure_half'
+                            ] ?>
+                        </td>
+
+                        <td class="numeric">
+                            <?= (int) $group[
+                                'participants_week1_departure_full'
+                            ] ?>
+                        </td>
+
+                        <td class="numeric">
+                            <?= (int) $group[
+                                'participants_visitors'
+                            ] ?>
+                        </td>
+
+                        <td class="numeric">
+                            <?= (int) $group[
+                                'participants_week2_full'
+                            ] ?>
+                        </td>
+
+                        <td class="numeric">
+                            <?= (int) $group[
+                                'participants_week2_departure_half'
+                            ] ?>
+                        </td>
+
+                        <td class="actions-cell">
+
+                            <a
+                                class="button button--secondary button--small"
+                                href="/admin/groups/edit.php?id=<?= (int) $group['id'] ?>"
+                            >
+                                Bearbeiten
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                <?php endforeach; ?>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    <?php endif; ?>
+
+</section>
+
+<?php
+require __DIR__ . '/partials/layout_end.php';

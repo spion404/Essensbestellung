@@ -10,68 +10,93 @@ $escape = static function (mixed $value): string {
     );
 };
 
+$adminPageTitle = 'Kategorien';
+$adminActiveSection = 'categories';
+
+require __DIR__ . '/partials/layout_start.php';
+
 ?>
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
+<div class="page-header">
+
+    <div class="page-header__copy">
+
+        <p class="eyebrow">
+            Produktkatalog
+        </p>
+
+        <h1>Kategorien</h1>
+
+        <p class="lead">
+            Kategorien strukturieren die Produktauswahl und werden
+            beim XLSX-Import bei Bedarf automatisch angelegt.
+        </p>
+
+    </div>
+
+    <a
+        class="button"
+        href="/admin/categories/create.php"
     >
+        Neue Kategorie
+    </a>
 
-    <title>Kategorien</title>
-</head>
-
-<body>
-
-<h1>Kategorien</h1>
+</div>
 
 <?php if ($created): ?>
-    <p>
+
+    <div class="alert alert--success">
         Die Kategorie wurde erstellt.
-    </p>
-<?php endif; ?>
-
-<p>
-    <a href="/admin/categories/create.php">
-        Neue Kategorie erstellen
-    </a>
-</p>
-
-
-<?php if ($categories === []): ?>
-
-    <p>
-        Es wurden noch keine Kategorien erfasst.
-    </p>
-
-<?php else: ?>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Kategorie</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-        <?php foreach ($categories as $category): ?>
-
-            <tr>
-                <td>
-                    <?= $escape($category['name']) ?>
-                </td>
-            </tr>
-
-        <?php endforeach; ?>
-
-        </tbody>
-    </table>
+    </div>
 
 <?php endif; ?>
 
-</body>
-</html>
+<section class="panel">
+
+    <div class="panel__header">
+
+        <div>
+
+            <h2>Erfasste Kategorien</h2>
+
+            <span class="small-muted">
+                <?= count($categories) ?> Kategorien
+            </span>
+
+        </div>
+
+    </div>
+
+    <?php if ($categories === []): ?>
+
+        <div class="empty-state">
+            Es wurden noch keine Kategorien erfasst.
+        </div>
+
+    <?php else: ?>
+
+        <div class="checkbox-grid">
+
+            <?php foreach (
+                $categories
+                as $category
+            ): ?>
+
+                <div class="info-card">
+
+                    <span class="badge badge--neutral">
+                        <?= $escape($category['name']) ?>
+                    </span>
+
+                </div>
+
+            <?php endforeach; ?>
+
+        </div>
+
+    <?php endif; ?>
+
+</section>
+
+<?php
+require __DIR__ . '/partials/layout_end.php';

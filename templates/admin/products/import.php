@@ -30,428 +30,526 @@ if ($preview !== null) {
     }
 }
 
+$adminPageTitle = 'Produkte importieren';
+$adminActiveSection = 'products';
+
+require dirname(__DIR__) . '/partials/layout_start.php';
+
 ?>
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<div class="page-header">
 
-    <title>
-        Produkte importieren
-    </title>
-</head>
+    <div class="page-header__copy">
 
-<body>
+        <p class="eyebrow">
+            Produkte
+        </p>
 
-<p>
-    <a href="/admin/products.php">
-        ← Zurück zu den Produkten
-    </a>
-</p>
+        <h1>Produkte aus XLSX importieren</h1>
 
-<h1>
-    Produkte aus XLSX importieren
-</h1>
+        <p class="lead">
+            Produktkatalog prüfen, Vorschau kontrollieren und
+            anschliessend importieren.
+        </p>
 
-<p>
-    <a
-        href="/admin/products/import-template.php"
-    >
-        XLSX-Vorlage herunterladen
-    </a>
-</p>
+    </div>
 
-<p>
-    Die erste Zeile der Datei muss
-    folgende Spalten enthalten:
-</p>
+    <div class="toolbar">
 
-<table>
-    <thead>
-        <tr>
-            <th>A</th>
-            <th>B</th>
-            <th>C</th>
-            <th>D</th>
-            <th>E</th>
-            <th>F</th>
-        </tr>
-    </thead>
+        <a
+            class="button button--secondary"
+            href="/admin/products/import-template.php"
+        >
+            XLSX-Vorlage herunterladen
+        </a>
 
-    <tbody>
-        <tr>
-            <td>Artikelnummer</td>
-            <td>Produkt</td>
-            <td>Einheit</td>
-            <td>Preis</td>
-            <td>Kategorien</td>
-            <td>Bemerkung</td>
-        </tr>
-    </tbody>
-</table>
+        <a
+            class="button button--secondary"
+            href="/admin/products.php"
+        >
+            Zurück zu den Produkten
+        </a>
 
-<p>
-    Mehrere Kategorien werden mit
-    einem Semikolon getrennt.
-</p>
+    </div>
 
-<p>
-    Beispiel:
-    <code>
-        Saucen &amp; Gewürze;
-        Vegetarisch
-    </code>
-</p>
+</div>
 
-<p>
-    Die Artikelnummer ist beim
-    XLSX-Import erforderlich.
-    Sie sollte in Excel als Text
-    gespeichert werden, damit
-    führende Nullen erhalten bleiben.
-</p>
+<section class="panel">
+
+    <div class="panel__header">
+
+        <div>
+
+            <h2>Dateiformat</h2>
+
+            <span class="small-muted">
+                Die erste Zeile muss diese sechs Spalten enthalten.
+            </span>
+
+        </div>
+
+    </div>
+
+    <div class="table-wrap">
+
+        <table>
+            <thead>
+                <tr>
+                    <th>A</th>
+                    <th>B</th>
+                    <th>C</th>
+                    <th>D</th>
+                    <th>E</th>
+                    <th>F</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td>Artikelnummer</td>
+                    <td>Produkt</td>
+                    <td>Einheit</td>
+                    <td>Preis</td>
+                    <td>Kategorien</td>
+                    <td>Bemerkung</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+    <p>
+        Mehrere Kategorien werden mit einem Semikolon getrennt,
+        zum Beispiel
+        <code class="code-inline">
+            Saucen &amp; Gewürze; Vegetarisch
+        </code>.
+    </p>
+
+    <p class="small-muted">
+        Die Artikelnummer ist erforderlich und sollte in Excel
+        als Text gespeichert sein, damit führende Nullen erhalten
+        bleiben.
+    </p>
+
+</section>
 
 <?php if ($errors !== []): ?>
 
-    <h2>Fehler</h2>
+    <div class="alert alert--danger">
 
-    <?php foreach (
-        $errors as $error
-    ): ?>
+        <strong>Fehler beim Import:</strong>
 
-        <p>
-            <?= $escape($error) ?>
-        </p>
+        <ul class="compact-list">
 
-    <?php endforeach; ?>
+            <?php foreach ($errors as $error): ?>
+
+                <li>
+                    <?= $escape($error) ?>
+                </li>
+
+            <?php endforeach; ?>
+
+        </ul>
+
+    </div>
 
 <?php endif; ?>
 
-<h2>XLSX-Datei auswählen</h2>
-
 <form
+    class="admin-form"
     method="post"
     enctype="multipart/form-data"
 >
+
     <input
         type="hidden"
         name="action"
         value="preview"
     >
 
-    <fieldset>
-        <legend>
-            Importmodus
-        </legend>
+    <section class="form-section">
 
-        <p>
-            <label>
+        <div class="form-section__header">
+
+            <h2>Importmodus</h2>
+
+        </div>
+
+        <fieldset class="form-fieldset">
+
+            <legend>
+                Was soll mit bestehenden Produkten passieren?
+            </legend>
+
+            <div class="import-mode-grid">
+
+                <label class="radio-card">
+
+                    <input
+                        type="radio"
+                        name="mode"
+                        value="<?= ProductImportService::MODE_MERGE ?>"
+                        <?= $selectedMode
+                            === ProductImportService::MODE_MERGE
+                                ? 'checked'
+                                : ''
+                        ?>
+                    >
+
+                    <span class="choice-copy">
+
+                        <strong>
+                            Ergänzen / aktualisieren
+                        </strong>
+
+                        <span>
+                            Neue Artikelnummern werden angelegt,
+                            bestehende anhand der Artikelnummer
+                            aktualisiert.
+                        </span>
+
+                    </span>
+
+                </label>
+
+                <label class="radio-card">
+
+                    <input
+                        type="radio"
+                        name="mode"
+                        value="<?= ProductImportService::MODE_REPLACE ?>"
+                        <?= $selectedMode
+                            === ProductImportService::MODE_REPLACE
+                                ? 'checked'
+                                : ''
+                        ?>
+                    >
+
+                    <span class="choice-copy">
+
+                        <strong>
+                            Bestehenden Katalog ersetzen
+                        </strong>
+
+                        <span>
+                            Alle bestehenden Produkte werden entfernt
+                            und durch die XLSX-Datei ersetzt.
+                        </span>
+
+                    </span>
+
+                </label>
+
+            </div>
+
+        </fieldset>
+
+    </section>
+
+    <section class="form-section">
+
+        <div class="form-section__header">
+
+            <h2>XLSX-Datei</h2>
+
+        </div>
+
+        <div class="file-box">
+
+            <div class="field">
+
+                <label for="xlsx">
+                    Datei auswählen
+                </label>
+
                 <input
-                    type="radio"
-                    name="mode"
-                    value="<?= ProductImportService::MODE_MERGE ?>"
-                    <?= $selectedMode === ProductImportService::MODE_MERGE
-                        ? 'checked'
-                        : ''
-                    ?>
+                    type="file"
+                    id="xlsx"
+                    name="xlsx"
+                    accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    required
                 >
 
-                <strong>
-                    Ergänzen / aktualisieren
-                </strong>
-            </label>
-        </p>
+            </div>
 
-        <p>
-            Neue Artikelnummern werden
-            als neue Produkte angelegt.
-            Bereits vorhandene
-            Artikelnummern werden mit
-            den Daten aus der XLSX
-            aktualisiert.
-        </p>
+        </div>
 
-        <p>
-            <label>
-                <input
-                    type="radio"
-                    name="mode"
-                    value="<?= ProductImportService::MODE_REPLACE ?>"
-                    <?= $selectedMode === ProductImportService::MODE_REPLACE
-                        ? 'checked'
-                        : ''
-                    ?>
-                >
+        <div class="form-actions">
 
-                <strong>
-                    Bestehenden Katalog ersetzen
-                </strong>
-            </label>
-        </p>
+            <button type="submit">
+                Datei prüfen
+            </button>
 
-        <p>
-            Alle bestehenden Produkte
-            werden entfernt und durch
-            den Inhalt der XLSX-Datei
-            ersetzt.
-        </p>
-    </fieldset>
+        </div>
 
-    <p>
-        <label for="xlsx">
-            XLSX-Datei
-        </label>
-        <br>
+    </section>
 
-        <input
-            type="file"
-            id="xlsx"
-            name="xlsx"
-            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            required
-        >
-    </p>
-
-    <p>
-        <button type="submit">
-            Datei prüfen
-        </button>
-    </p>
 </form>
 
 <?php if ($preview !== null): ?>
 
-    <hr>
+    <section class="panel">
 
-    <h2>Importvorschau</h2>
+        <div class="panel__header">
 
-    <p>
-        Datei:
-        <strong>
-            <?= $escape(
-                $preview['file_name']
-            ) ?>
-        </strong>
-    </p>
+            <div>
 
-    <p>
-        Importmodus:
-        <strong>
-            <?php if (
-                $preview['mode']
-                === ProductImportService::MODE_REPLACE
-            ): ?>
-                Bestehenden Katalog ersetzen
-            <?php else: ?>
-                Ergänzen / aktualisieren
-            <?php endif; ?>
-        </strong>
-    </p>
+                <h2>Importvorschau</h2>
 
-    <?php if (
-        $preview['mode']
-        === ProductImportService::MODE_REPLACE
-    ): ?>
+                <span class="small-muted">
+                    <?= $escape($preview['file_name']) ?>
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="stats">
+
+            <div class="stat stat--success">
+
+                <span class="stat__label">
+                    Gültige Zeilen
+                </span>
+
+                <span class="stat__value">
+                    <?= $validRows ?>
+                </span>
+
+            </div>
+
+            <div
+                class="stat <?= $invalidRows > 0
+                    ? 'stat--danger'
+                    : ''
+                ?>"
+            >
+
+                <span class="stat__label">
+                    Fehlerhafte Zeilen
+                </span>
+
+                <span class="stat__value">
+                    <?= $invalidRows ?>
+                </span>
+
+            </div>
+
+        </div>
 
         <p>
-            <strong>Achtung:</strong>
-            Beim Bestätigen werden alle
-            vorhandenen Produkte gelöscht
-            und durch diesen Katalog ersetzt.
+            Importmodus:
+            <strong>
+                <?php if (
+                    $preview['mode']
+                    === ProductImportService::MODE_REPLACE
+                ): ?>
+                    Bestehenden Katalog ersetzen
+                <?php else: ?>
+                    Ergänzen / aktualisieren
+                <?php endif; ?>
+            </strong>
         </p>
-
-    <?php endif; ?>
-
-    <p>
-        Gültige Zeilen:
-        <?= $validRows ?>
-        <br>
-
-        Fehlerhafte Zeilen:
-        <?= $invalidRows ?>
-    </p>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Zeile</th>
-                <th>Artikelnummer</th>
-                <th>Produkt</th>
-                <th>Einheit</th>
-                <th>Preis</th>
-                <th>Kategorien</th>
-                <th>Bemerkung</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-        <?php foreach (
-            $preview['rows']
-            as $row
-        ): ?>
-
-            <tr>
-                <td>
-                    <?= (int) $row['row'] ?>
-                </td>
-
-                <td>
-                    <?= $escape(
-                        $row[
-                            'article_number'
-                        ]
-                    ) ?>
-                </td>
-
-                <td>
-                    <?= $escape(
-                        $row['name']
-                    ) ?>
-                </td>
-
-                <td>
-                    <?= $row['unit'] !== ''
-                        ? $escape(
-                            $row['unit']
-                        )
-                        : '–'
-                    ?>
-                </td>
-
-                <td>
-                    <?= $escape(
-                        $row['price']
-                    ) ?>
-                </td>
-
-                <td>
-                    <?php if (
-                        $row[
-                            'categories'
-                        ] === []
-                    ): ?>
-                        –
-                    <?php else: ?>
-                        <?= $escape(
-                            implode(
-                                ', ',
-                                $row[
-                                    'categories'
-                                ]
-                            )
-                        ) ?>
-                    <?php endif; ?>
-                </td>
-
-                <td>
-                    <?= $row['remark'] !== ''
-                        ? $escape(
-                            $row['remark']
-                        )
-                        : '–'
-                    ?>
-                </td>
-
-                <td>
-                    <?php if (
-                        $row['errors'] === []
-                    ): ?>
-
-                        OK
-
-                    <?php else: ?>
-
-                        <?php foreach (
-                            $row['errors']
-                            as $rowError
-                        ): ?>
-
-                            <div>
-                                <?= $escape(
-                                    $rowError
-                                ) ?>
-                            </div>
-
-                        <?php endforeach; ?>
-
-                    <?php endif; ?>
-                </td>
-            </tr>
-
-        <?php endforeach; ?>
-
-        </tbody>
-    </table>
-
-    <?php if (
-        $invalidRows === 0
-    ): ?>
-
-        <h2>Import bestätigen</h2>
 
         <?php if (
             $preview['mode']
             === ProductImportService::MODE_REPLACE
         ): ?>
 
-            <p>
-                Der bestehende Produktkatalog
-                wird vollständig ersetzt.
-            </p>
-
-        <?php else: ?>
-
-            <p>
-                Bestehende Produkte mit
-                gleicher Artikelnummer
-                werden aktualisiert.
-                Neue Artikelnummern werden
-                ergänzt.
-            </p>
+            <div class="alert alert--warning">
+                <strong>Achtung:</strong>
+                Beim Bestätigen werden alle vorhandenen Produkte
+                gelöscht und durch diesen Katalog ersetzt.
+            </div>
 
         <?php endif; ?>
 
-        <p>
-            Noch nicht vorhandene
-            Kategorien werden automatisch
-            angelegt.
-        </p>
+        <div class="table-wrap">
 
-        <form method="post">
-            <input
-                type="hidden"
-                name="action"
-                value="import"
-            >
+            <table>
 
-            <button type="submit">
-                Import durchführen
-            </button>
-        </form>
+                <thead>
+                    <tr>
+                        <th>Zeile</th>
+                        <th>Artikelnummer</th>
+                        <th>Produkt</th>
+                        <th>Einheit</th>
+                        <th>Preis</th>
+                        <th>Kategorien</th>
+                        <th>Bemerkung</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                <?php foreach (
+                    $preview['rows']
+                    as $row
+                ): ?>
+
+                    <tr>
+
+                        <td>
+                            <?= (int) $row['row'] ?>
+                        </td>
+
+                        <td>
+                            <?= $escape(
+                                $row['article_number']
+                            ) ?>
+                        </td>
+
+                        <td>
+                            <strong>
+                                <?= $escape(
+                                    $row['name']
+                                ) ?>
+                            </strong>
+                        </td>
+
+                        <td>
+                            <?= $row['unit'] !== ''
+                                ? $escape($row['unit'])
+                                : '–'
+                            ?>
+                        </td>
+
+                        <td>
+                            <?= $escape($row['price']) ?>
+                        </td>
+
+                        <td>
+                            <?= $row['categories'] === []
+                                ? '–'
+                                : $escape(
+                                    implode(
+                                        ', ',
+                                        $row['categories']
+                                    )
+                                )
+                            ?>
+                        </td>
+
+                        <td>
+                            <?= $row['remark'] !== ''
+                                ? $escape($row['remark'])
+                                : '–'
+                            ?>
+                        </td>
+
+                        <td class="preview-status">
+
+                            <?php if (
+                                $row['errors'] === []
+                            ): ?>
+
+                                <span
+                                    class="badge badge--success"
+                                >
+                                    OK
+                                </span>
+
+                            <?php else: ?>
+
+                                <div class="alert alert--danger">
+
+                                    <?php foreach (
+                                        $row['errors']
+                                        as $rowError
+                                    ): ?>
+
+                                        <div>
+                                            <?= $escape(
+                                                $rowError
+                                            ) ?>
+                                        </div>
+
+                                    <?php endforeach; ?>
+
+                                </div>
+
+                            <?php endif; ?>
+
+                        </td>
+
+                    </tr>
+
+                <?php endforeach; ?>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+    <?php if ($invalidRows === 0): ?>
+
+        <section class="form-section admin-form">
+
+            <div class="form-section__header">
+
+                <h2>Import bestätigen</h2>
+
+            </div>
+
+            <?php if (
+                $preview['mode']
+                === ProductImportService::MODE_REPLACE
+            ): ?>
+
+                <div class="alert alert--warning">
+                    Der bestehende Produktkatalog wird vollständig
+                    ersetzt.
+                </div>
+
+            <?php else: ?>
+
+                <div class="alert alert--info">
+                    Bestehende Produkte mit gleicher Artikelnummer
+                    werden aktualisiert; neue Artikelnummern ergänzt.
+                </div>
+
+            <?php endif; ?>
+
+            <p>
+                Noch nicht vorhandene Kategorien werden automatisch
+                angelegt.
+            </p>
+
+            <form method="post">
+
+                <input
+                    type="hidden"
+                    name="action"
+                    value="import"
+                >
+
+                <button type="submit">
+                    Import durchführen
+                </button>
+
+            </form>
+
+        </section>
 
     <?php else: ?>
 
-        <h2>
-            Import noch nicht möglich
-        </h2>
+        <div class="alert alert--warning">
 
-        <p>
-            Korrigiere die markierten
-            Zeilen in der XLSX-Datei und
-            lade sie anschliessend erneut
-            hoch.
-        </p>
+            <strong>Import noch nicht möglich.</strong>
+
+            Korrigiere die markierten Zeilen in der XLSX-Datei
+            und lade sie anschliessend erneut hoch.
+
+        </div>
 
     <?php endif; ?>
 
 <?php endif; ?>
 
-</body>
-</html>
+<?php
+require dirname(__DIR__) . '/partials/layout_end.php';

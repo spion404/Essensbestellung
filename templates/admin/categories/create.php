@@ -17,62 +17,88 @@ $fieldError = static function (
         return '';
     }
 
-    return '<p>'
+    return '<p class="field-error">'
         . $escape($errors[$field])
         . '</p>';
 };
 
+$adminPageTitle = 'Neue Kategorie';
+$adminActiveSection = 'categories';
+
+require dirname(__DIR__) . '/partials/layout_start.php';
+
 ?>
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
+<div class="page-header">
+
+    <div class="page-header__copy">
+
+        <p class="eyebrow">
+            Kategorien
+        </p>
+
+        <h1>Neue Kategorie</h1>
+
+        <p class="lead">
+            Eine zusätzliche Filter- und Produktkategorie anlegen.
+        </p>
+
+    </div>
+
+    <a
+        class="button button--secondary"
+        href="/admin/categories.php"
     >
-
-    <title>Neue Kategorie</title>
-</head>
-
-<body>
-
-<p>
-    <a href="/admin/categories.php">
-        ← Zurück zu den Kategorien
+        Zurück zu den Kategorien
     </a>
-</p>
 
-<h1>Neue Kategorie</h1>
+</div>
 
-<form method="post">
+<form
+    class="admin-form"
+    method="post"
+>
 
-    <p>
-        <label for="name">
-            Kategoriename
-        </label>
-        <br>
+    <section class="form-section">
 
-        <input
-            type="text"
-            id="name"
-            name="name"
-            maxlength="100"
-            value="<?= $escape($form['name']) ?>"
-            required
-        >
+        <div class="field">
 
-        <?= $fieldError('name') ?>
-    </p>
+            <label for="name">
+                Kategoriename
+            </label>
 
-    <p>
+            <input
+                type="text"
+                id="name"
+                name="name"
+                maxlength="100"
+                value="<?= $escape($form['name']) ?>"
+                required
+                autofocus
+            >
+
+            <?= $fieldError('name') ?>
+
+        </div>
+
+    </section>
+
+    <div class="form-actions">
+
         <button type="submit">
             Kategorie erstellen
         </button>
-    </p>
+
+        <a
+            class="button button--secondary"
+            href="/admin/categories.php"
+        >
+            Abbrechen
+        </a>
+
+    </div>
 
 </form>
 
-</body>
-</html>
+<?php
+require dirname(__DIR__) . '/partials/layout_end.php';

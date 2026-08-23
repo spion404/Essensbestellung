@@ -32,21 +32,26 @@ $formatDate = static function (string $date): string {
     return $parsedDate->format('d.m.Y');
 };
 
-$formatDateTime = static function (?string $dateTime): string {
+$formatDateTime = static function (
+    ?string $dateTime
+): string {
     if ($dateTime === null || $dateTime === '') {
         return '–';
     }
 
-    $parsedDateTime = DateTimeImmutable::createFromFormat(
-        'Y-m-d H:i:s',
-        $dateTime
-    );
+    $parsedDateTime =
+        DateTimeImmutable::createFromFormat(
+            'Y-m-d H:i:s',
+            $dateTime
+        );
 
     if ($parsedDateTime === false) {
         return $dateTime;
     }
 
-    return $parsedDateTime->format('d.m.Y H:i');
+    return $parsedDateTime->format(
+        'd.m.Y H:i'
+    );
 };
 
 $statusLabels = [
@@ -54,153 +59,259 @@ $statusLabels = [
     'submitted' => 'Bestätigt',
 ];
 
-?>
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
+$isSubmitted =
+    $order['status'] === 'submitted';
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
+$adminPageTitle =
+    'Bestellung – '
+    . (string) $order['group_name'];
+
+$adminActiveSection = 'orders';
+
+require dirname(__DIR__) . '/partials/layout_start.php';
+
+?>
+
+<div class="page-header">
+
+    <div class="page-header__copy">
+
+        <p class="eyebrow">
+            Bestellungen
+        </p>
+
+        <h1>
+            <?= $escape($order['group_name']) ?>
+        </h1>
+
+        <p class="lead">
+            Gespeicherter Bestell-Snapshot für diesen Liefertag.
+        </p>
+
+    </div>
+
+    <div class="toolbar">
+
+        <a
+            class="button"
+            href="/admin/orders/edit.php?group_id=<?= (int) $order['group_id'] ?>&amp;date=<?= $escape(
+                rawurlencode(
+                    (string) $order['delivery_date']
+                )
+            ) ?>"
+        >
+            Bestellung bearbeiten
+        </a>
+
+        <a
+            class="button button--secondary"
+            href="/admin/orders.php"
+        >
+            Zurück
+        </a>
+
+    </div>
+
+</div>
+
+<div class="stats">
+
+    <div class="stat">
+
+        <span class="stat__label">
+            Liefertag
+        </span>
+
+        <span class="stat__value">
+            <?= $escape(
+                $formatDate(
+                    (string) $order['delivery_date']
+                )
+            ) ?>
+        </span>
+
+    </div>
+
+    <div
+        class="stat <?= $isSubmitted
+            ? 'stat--success'
+            : 'stat--warning'
+        ?>"
     >
 
-    <title>
-        Bestellung – <?= $escape($order['group_name']) ?>
-    </title>
-</head>
+        <span class="stat__label">
+            Status
+        </span>
 
-<body>
+        <span class="stat__value">
+            <?= $escape(
+                $statusLabels[
+                    $order['status']
+                ]
+                ?? $order['status']
+            ) ?>
+        </span>
 
-<p>
-    <a href="/admin/orders.php">
-        Zurück zu den Bestellungen
-    </a>
-</p>
+    </div>
 
-<h1>
-    Bestellung: <?= $escape($order['group_name']) ?>
-</h1>
+    <div class="stat">
 
-<dl>
-    <dt>Liefertag</dt>
-    <dd>
-        <?= $escape(
-            $formatDate(
-                (string) $order['delivery_date']
-            )
-        ) ?>
-    </dd>
+        <span class="stat__label">
+            Bestätigt am
+        </span>
 
-    <dt>Status</dt>
-    <dd>
-        <?= $escape(
-            $statusLabels[$order['status']]
-            ?? $order['status']
-        ) ?>
-    </dd>
+        <span class="stat__value">
+            <?= $escape(
+                $formatDateTime(
+                    $order['submitted_at']
+                )
+            ) ?>
+        </span>
 
-    <dt>Bestätigt am</dt>
-    <dd>
-        <?= $escape(
-            $formatDateTime($order['submitted_at'])
-        ) ?>
-    </dd>
-</dl>
+    </div>
 
-<p>
-    Die Produktdaten und Preise in dieser Ansicht sind die in der
-    Bestellung gespeicherten Werte. Spätere Änderungen am
-    Produktkatalog verändern diese Bestellung nicht.
-</p>
+    <div class="stat">
 
-<?php if ($items === []): ?>
+        <span class="stat__label">
+            Warenwert
+        </span>
 
-    <p>
-        Diese Bestellung enthält noch keine Positionen.
-    </p>
+        <span class="stat__value">
+            <?= $escape(
+                $formatMoney(
+                    $order['total_amount']
+                )
+            ) ?>
+        </span>
 
-<?php else: ?>
+    </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Artikelnummer</th>
-                <th>Produkt</th>
-                <th>Einheit</th>
-                <th>Menge</th>
-                <th>Preis</th>
-                <th>Total</th>
-            </tr>
-        </thead>
+</div>
 
-        <tbody>
+<div class="alert alert--info">
+    Produktdaten und Preise sind Snapshots der Bestellung.
+    Spätere Änderungen am Produktkatalog verändern diese
+    Bestellung nicht.
+</div>
 
-        <?php foreach ($items as $item): ?>
-            <tr>
-                <td>
-                    <?php if (
-                        $item['article_number'] === null
-                        || $item['article_number'] === ''
-                    ): ?>
-                        –
-                    <?php else: ?>
-                        <?= $escape($item['article_number']) ?>
-                    <?php endif; ?>
-                </td>
+<section class="panel">
 
-                <td>
-                    <?= $escape($item['product_name']) ?>
-                </td>
+    <div class="panel__header">
 
-                <td>
-                    <?php if (
-                        $item['unit'] === null
-                        || $item['unit'] === ''
-                    ): ?>
-                        –
-                    <?php else: ?>
-                        <?= $escape($item['unit']) ?>
-                    <?php endif; ?>
-                </td>
+        <div>
+            <h2>Bestellpositionen</h2>
+            <span class="small-muted">
+                <?= count($items) ?> Positionen
+            </span>
+        </div>
 
-                <td>
-                    <?= (int) $item['quantity'] ?>
-                </td>
+    </div>
 
-                <td>
-                    <?= $escape(
-                        $formatMoney($item['unit_price'])
-                    ) ?>
-                </td>
+    <?php if ($items === []): ?>
 
-                <td>
-                    <?= $escape(
-                        $formatMoney(
-                            $item['line_total_amount']
-                        )
-                    ) ?>
-                </td>
-            </tr>
-        <?php endforeach; ?>
+        <div class="empty-state">
+            Diese Bestellung enthält noch keine Positionen.
+        </div>
 
-        </tbody>
+    <?php else: ?>
 
-        <tfoot>
-            <tr>
-                <th colspan="5">
-                    Warenwert
-                </th>
-                <th>
-                    <?= $escape(
-                        $formatMoney($order['total_amount'])
-                    ) ?>
-                </th>
-            </tr>
-        </tfoot>
-    </table>
+        <div class="table-wrap">
 
-<?php endif; ?>
+            <table>
 
-</body>
-</html>
+                <thead>
+                    <tr>
+                        <th>Artikelnummer</th>
+                        <th>Produkt</th>
+                        <th>Einheit</th>
+                        <th>Packungen</th>
+                        <th>Preis</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                <?php foreach ($items as $item): ?>
+
+                    <tr>
+
+                        <td>
+                            <?= $item['article_number'] === null
+                                || $item['article_number'] === ''
+                                    ? '–'
+                                    : $escape(
+                                        $item['article_number']
+                                    ) ?>
+                        </td>
+
+                        <td>
+                            <strong>
+                                <?= $escape(
+                                    $item['product_name']
+                                ) ?>
+                            </strong>
+                        </td>
+
+                        <td>
+                            <?= $item['unit'] === null
+                                || $item['unit'] === ''
+                                    ? '–'
+                                    : $escape($item['unit']) ?>
+                        </td>
+
+                        <td class="numeric">
+                            <?= (int) $item['quantity'] ?>
+                        </td>
+
+                        <td class="numeric">
+                            <?= $escape(
+                                $formatMoney(
+                                    $item['unit_price']
+                                )
+                            ) ?>
+                        </td>
+
+                        <td class="numeric">
+                            <strong>
+                                <?= $escape(
+                                    $formatMoney(
+                                        $item[
+                                            'line_total_amount'
+                                        ]
+                                    )
+                                ) ?>
+                            </strong>
+                        </td>
+
+                    </tr>
+
+                <?php endforeach; ?>
+
+                </tbody>
+
+                <tfoot>
+                    <tr>
+                        <th colspan="5">
+                            Warenwert
+                        </th>
+                        <th class="numeric">
+                            <?= $escape(
+                                $formatMoney(
+                                    $order['total_amount']
+                                )
+                            ) ?>
+                        </th>
+                    </tr>
+                </tfoot>
+
+            </table>
+
+        </div>
+
+    <?php endif; ?>
+
+</section>
+
+<?php
+require dirname(__DIR__) . '/partials/layout_end.php';

@@ -1,0 +1,286 @@
+:root {
+    --form-max: 860px;
+}
+
+.button--danger,
+button.button--danger {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
+}
+
+.button--danger:hover,
+button.button--danger:hover {
+    background: #83312c;
+    border-color: #83312c;
+    color: #fff;
+}
+
+.admin-form {
+    max-width: var(--form-max);
+}
+
+.form-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 1.25rem;
+    padding: 1.25rem;
+}
+
+.form-section__header {
+    margin-bottom: 1rem;
+}
+
+.form-section__header h2,
+.form-section__header h3 {
+    margin-bottom: 0.3rem;
+}
+
+.form-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-grid--three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.field--full {
+    grid-column: 1 / -1;
+}
+
+.field-error {
+    color: var(--danger);
+    font-size: 0.84rem;
+    font-weight: 650;
+    margin: 0.3rem 0 0;
+}
+
+.field-help {
+    color: var(--muted);
+    font-size: 0.83rem;
+    margin: 0.3rem 0 0;
+}
+
+.input-prefix {
+    align-items: stretch;
+    display: flex;
+}
+
+.input-prefix__label {
+    align-items: center;
+    background: var(--surface-soft);
+    border: 1px solid #bfc8c0;
+    border-radius: var(--radius-small) 0 0 var(--radius-small);
+    border-right: 0;
+    color: var(--muted);
+    display: flex;
+    font-size: 0.88rem;
+    font-weight: 750;
+    padding: 0 0.7rem;
+}
+
+.input-prefix input {
+    border-radius: 0 var(--radius-small) var(--radius-small) 0;
+}
+
+fieldset.form-fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+}
+
+fieldset.form-fieldset legend {
+    font-size: 0.88rem;
+    font-weight: 750;
+    margin-bottom: 0.55rem;
+}
+
+.checkbox-grid {
+    display: grid;
+    gap: 0.55rem;
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(190px, 1fr)
+        );
+}
+
+.checkbox-card,
+.radio-card {
+    align-items: flex-start;
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-small);
+    cursor: pointer;
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.7rem;
+}
+
+.checkbox-card:hover,
+.radio-card:hover {
+    border-color: #b8c5ba;
+}
+
+.checkbox-card input,
+.radio-card input {
+    flex: 0 0 auto;
+    min-height: auto;
+    margin: 0.2rem 0 0;
+    padding: 0;
+    width: auto;
+}
+
+.choice-copy {
+    display: grid;
+    gap: 0.15rem;
+}
+
+.choice-copy strong {
+    font-size: 0.9rem;
+}
+
+.choice-copy span {
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.form-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-top: 1rem;
+}
+
+.content-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(220px, 1fr)
+        );
+}
+
+.info-card {
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-small);
+    padding: 0.9rem;
+}
+
+.info-card__label {
+    color: var(--muted);
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 750;
+    margin-bottom: 0.25rem;
+}
+
+.info-card__value {
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.code-inline {
+    background: #eef1ed;
+    border-radius: 5px;
+    font-family:
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        Monaco,
+        Consolas,
+        monospace;
+    font-size: 0.88em;
+    padding: 0.14rem 0.35rem;
+}
+
+.stack {
+    display: grid;
+    gap: 1rem;
+}
+
+.compact-list {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.compact-list li + li {
+    margin-top: 0.3rem;
+}
+
+.import-mode-grid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(260px, 1fr)
+        );
+}
+
+.file-box {
+    background: var(--surface-soft);
+    border: 1px dashed #aeb9b0;
+    border-radius: var(--radius-small);
+    padding: 1rem;
+}
+
+.file-box input[type="file"] {
+    background: transparent;
+    border: 0;
+    min-height: auto;
+    padding: 0;
+}
+
+.preview-status {
+    max-width: 320px;
+}
+
+.danger-zone {
+    background: var(--danger-soft);
+    border: 1px solid #e8c2bf;
+    border-radius: var(--radius);
+    padding: 1.25rem;
+}
+
+.danger-zone h2 {
+    color: #87332e;
+}
+
+tfoot th,
+tfoot td {
+    border-top: 2px solid var(--border);
+    font-weight: 800;
+}
+
+@media (max-width: 760px) {
+    .form-grid,
+    .form-grid--three {
+        grid-template-columns: 1fr;
+    }
+
+    .field--full {
+        grid-column: auto;
+    }
+
+    .form-section {
+        padding: 1rem;
+    }
+}
+
+.visually-hidden {
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+}
