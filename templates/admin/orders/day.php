@@ -120,9 +120,17 @@ $statusLabels = [
         : 'vorbei' ?>
 </p>
 
-<h3>Export</h3>
+<h3>Ausgabe und Export</h3>
 
 <p>
+    <a
+        href="/admin/orders/picking.php?date=<?= $escape(
+            rawurlencode($deliveryDate)
+        ) ?>"
+    >
+        Kommissionierliste drucken
+    </a>
+    |
     <a
         href="/admin/orders/export.php?date=<?= $escape(
             rawurlencode($deliveryDate)
@@ -141,10 +149,10 @@ $statusLabels = [
 </p>
 
 <p>
-    Das XLSX enthält die Sammelbestellung,
-    die Kommissionierung pro Gruppe und den Gruppenstatus.
-    In die eigentlichen Bestellmengen fliessen nur definitiv
-    bestätigte Bestellungen ein.
+    Die Druckansicht und das XLSX enthalten eine
+    Kommissionierung pro Gruppe. In die eigentlichen
+    Bestellmengen fliessen nur definitiv bestätigte
+    Bestellungen ein.
 </p>
 
 <h3>Status der Gruppen</h3>
