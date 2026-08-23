@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Service\AdminSessionService;
+
 $layoutEscape = static function (mixed $value): string {
     return htmlspecialchars(
         (string) $value,
@@ -18,9 +20,17 @@ $adminActiveSection =
     $adminActiveSection
     ?? '';
 
+$adminExtraStylesheets =
+    $adminExtraStylesheets
+    ?? [];
+
+$adminBrandTitle = (string) (
+    $settings['camp_name']
+    ?? 'Essensbestellung'
+);
+
 $adminSessionForLayout =
-    $adminSession
-    ?? new \App\Service\AdminSessionService();
+    new AdminSessionService();
 
 $adminLogoutCsrfToken =
     $adminSessionForLayout->csrfToken();
@@ -43,6 +53,13 @@ $adminLogoutCsrfToken =
 
     <link rel="stylesheet" href="/assets/app.css">
     <link rel="stylesheet" href="/assets/admin.css">
+
+    <?php foreach ($adminExtraStylesheets as $stylesheet): ?>
+        <link
+            rel="stylesheet"
+            href="<?= $layoutEscape($stylesheet) ?>"
+        >
+    <?php endforeach; ?>
 </head>
 
 <body>
@@ -63,7 +80,7 @@ $adminLogoutCsrfToken =
             <span class="brand__text">
 
                 <span class="brand__title">
-                    Essensbestellung
+                    <?= $layoutEscape($adminBrandTitle) ?>
                 </span>
 
                 <span class="brand__subtitle">

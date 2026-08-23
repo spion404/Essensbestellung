@@ -1,0 +1,135 @@
+.home-page {
+    min-height: 100vh;
+}
+
+.home-shell {
+    margin: 0 auto;
+    max-width: 980px;
+    padding: clamp(2rem, 7vw, 5rem) 1rem;
+}
+
+.home-hero {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.home-hero .brand {
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.home-hero h1 {
+    margin-bottom: 0.7rem;
+}
+
+.home-hero .lead {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 680px;
+}
+
+.entry-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.entry-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    min-height: 260px;
+    padding: 1.5rem;
+    text-decoration: none;
+    transition:
+        border-color 140ms ease,
+        box-shadow 140ms ease,
+        transform 140ms ease;
+}
+
+.entry-card:hover {
+    border-color: #b8c8ba;
+    box-shadow: 0 16px 36px rgba(31, 42, 34, 0.12);
+    color: var(--text);
+    transform: translateY(-2px);
+}
+
+.entry-card__icon {
+    align-items: center;
+    background: var(--brand-soft);
+    border-radius: 14px;
+    color: var(--brand-dark);
+    display: inline-flex;
+    font-size: 1.2rem;
+    font-weight: 850;
+    height: 3rem;
+    justify-content: center;
+    margin-bottom: 1.1rem;
+    width: 3rem;
+}
+
+.entry-card__label {
+    color: var(--brand);
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.35rem;
+    text-transform: uppercase;
+}
+
+.entry-card h2 {
+    margin-bottom: 0.65rem;
+}
+
+.entry-card p {
+    color: var(--muted);
+    flex: 1;
+}
+
+.entry-card__action {
+    color: var(--brand-dark);
+    font-weight: 750;
+    margin-top: 1rem;
+}
+
+.review-header-grid {
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    margin-bottom: 1.5rem;
+}
+
+.review-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.review-actions form {
+    margin: 0;
+}
+
+.review-total-row td {
+    font-weight: 800;
+}
+
+.review-note {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-top: 0.75rem;
+}
+
+@media (max-width: 720px) {
+    .entry-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .entry-card {
+        min-height: 0;
+    }
+}

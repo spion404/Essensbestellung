@@ -48,9 +48,7 @@ $formatDate = static function (string $date): string {
         7 => 'Sonntag',
     ];
 
-    return $weekdays[
-        (int) $parsedDate->format('N')
-    ]
+    return $weekdays[(int) $parsedDate->format('N')]
         . ', '
         . $parsedDate->format('d.m.Y');
 };
@@ -58,15 +56,7 @@ $formatDate = static function (string $date): string {
 $formatDateTime = static function (
     DateTimeImmutable $dateTime
 ): string {
-    return $dateTime->format(
-        'd.m.Y H:i'
-    ) . ' Uhr';
-};
-
-$formatQuantity = static function (
-    mixed $quantity
-): string {
-    return (string) (int) $quantity;
+    return $dateTime->format('d.m.Y H:i') . ' Uhr';
 };
 
 $isSubmitted =
@@ -78,6 +68,13 @@ $isOrderingOpen =
 $remainingBudgetCents =
     (int) $summary['remaining_budget_cents'];
 
+$statusLabel = $isSubmitted
+    ? 'Bestätigt'
+    : 'Entwurf';
+
+$statusClass = $isSubmitted
+    ? 'badge--success'
+    : 'badge--warning';
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -92,278 +89,336 @@ $remainingBudgetCents =
     <title>
         Bestellung prüfen – <?= $escape($group['name']) ?>
     </title>
+
+    <link rel="stylesheet" href="/assets/app.css">
+    <link rel="stylesheet" href="/assets/public.css">
 </head>
 
 <body>
 
-<p>
-    <a href="/group/">
-        Zurück zu den Liefertagen
-    </a>
-</p>
+<header class="topbar">
+    <div class="topbar__inner">
+        <a class="brand" href="/group/">
+            <span class="brand__mark">EB</span>
 
-<h1><?= $escape($settings['camp_name']) ?></h1>
+            <span class="brand__text">
+                <span class="brand__title">
+                    <?= $escape($settings['camp_name']) ?>
+                </span>
 
-<h2>
-    Bestellung:
-    <?= $escape($group['name']) ?>
-</h2>
+                <span class="brand__subtitle">
+                    Gruppenbestellung
+                </span>
+            </span>
+        </a>
 
-<p>
-    <strong>
-        <?= $escape(
-            $formatDate($deliveryDate)
-        ) ?>
-    </strong>
-</p>
+        <div class="topbar__actions">
+            <span class="topbar__identity">
+                Angemeldet als
+                <strong><?= $escape($group['name']) ?></strong>
+            </span>
 
-<p>
-    Bestellschluss:
-    <strong>
-        <?= $escape(
-            $formatDateTime(
-                $cutoffStatus['deadline']
-            )
-        ) ?>
-    </strong>
-</p>
+            <form
+                class="inline-form"
+                method="post"
+                action="/group/logout.php"
+            >
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="<?= $escape($csrfToken) ?>"
+                >
 
-<?php if ($submitted): ?>
-    <p>
-        <strong>
-            Die Bestellung wurde definitiv bestätigt.
-        </strong>
-    </p>
-<?php endif; ?>
+                <button
+                    class="button--secondary button--small"
+                    type="submit"
+                >
+                    Abmelden
+                </button>
+            </form>
+        </div>
+    </div>
+</header>
 
-<?php if ($error !== null): ?>
-    <p>
-        <strong><?= $escape($error) ?></strong>
-    </p>
-<?php endif; ?>
+<main class="app-container">
 
-<p>
-    Status:
-    <strong>
-        <?= $isSubmitted
-            ? 'Bestätigt'
-            : 'Entwurf' ?>
-    </strong>
-</p>
+    <div class="page-header">
+        <div class="page-header__copy">
+            <p class="eyebrow">Bestellung prüfen</p>
 
-<?php if (
-    !$isSubmitted
-    && !$isOrderingOpen
-): ?>
-    <p>
-        <strong>
-            Der Bestellschluss ist vorbei.
-            Dieser Entwurf kann nicht mehr bearbeitet
+            <h1><?= $escape($formatDate($deliveryDate)) ?></h1>
+
+            <p class="lead">
+                Kontrolliere die Bestellung vor der definitiven Bestätigung.
+            </p>
+        </div>
+
+        <a
+            class="button button--secondary"
+            href="/group/"
+        >
+            Zurück zu den Liefertagen
+        </a>
+    </div>
+
+    <div class="review-header-grid">
+        <div class="stat">
+            <span class="stat__label">Status</span>
+            <span class="stat__value">
+                <span class="badge <?= $statusClass ?>">
+                    <?= $escape($statusLabel) ?>
+                </span>
+            </span>
+        </div>
+
+        <div class="stat">
+            <span class="stat__label">Bestellschluss</span>
+            <span class="stat__value">
+                <?= $escape(
+                    $formatDateTime(
+                        $cutoffStatus['deadline']
+                    )
+                ) ?>
+            </span>
+        </div>
+
+        <div class="stat stat--success">
+            <span class="stat__label">Tagesbudget</span>
+            <span class="stat__value">
+                <?= $escape(
+                    $formatMoneyCents(
+                        (int) $summary['budget_cents']
+                    )
+                ) ?>
+            </span>
+        </div>
+
+        <div class="stat">
+            <span class="stat__label">Warenwert</span>
+            <span class="stat__value">
+                <?= $escape(
+                    $formatMoneyCents(
+                        (int) $summary['total_cents']
+                    )
+                ) ?>
+            </span>
+        </div>
+
+        <div class="stat <?= $remainingBudgetCents < 0 ? 'stat--danger' : '' ?>">
+            <span class="stat__label">Verbleibend</span>
+            <span class="stat__value">
+                <?= $escape(
+                    $formatMoneyCents(
+                        $remainingBudgetCents
+                    )
+                ) ?>
+            </span>
+        </div>
+    </div>
+
+    <?php if ($submitted): ?>
+        <div class="alert alert--success">
+            <strong>Bestellung bestätigt.</strong>
+            Die Bestellung wurde definitiv übermittelt.
+        </div>
+    <?php endif; ?>
+
+    <?php if ($error !== null): ?>
+        <div class="alert alert--danger">
+            <strong><?= $escape($error) ?></strong>
+        </div>
+    <?php endif; ?>
+
+    <?php if (
+        !$isSubmitted
+        && !$isOrderingOpen
+    ): ?>
+        <div class="alert alert--warning">
+            <strong>Bestellschluss vorbei.</strong>
+            Dieser Entwurf bleibt sichtbar, kann aber nicht mehr bearbeitet
             oder definitiv bestätigt werden.
-        </strong>
-    </p>
-<?php endif; ?>
+        </div>
+    <?php endif; ?>
 
-<?php if ($summary['items'] === []): ?>
-
-    <p>
-        Die Bestellung enthält noch keine Produkte.
-    </p>
-
-<?php else: ?>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Produkt</th>
-                <th>Einheit</th>
-                <th>Packungen</th>
-                <th>Preis</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-        <?php foreach ($summary['items'] as $item): ?>
-            <tr>
-                <td>
-                    <?= $escape($item['product_name']) ?>
-
-                    <?php if (
-                        $item['article_number'] !== null
-                        && $item['article_number'] !== ''
-                    ): ?>
-                        <br>
-
-                        <small>
-                            Art.-Nr.
-                            <?= $escape(
-                                $item['article_number']
-                            ) ?>
-                        </small>
-                    <?php endif; ?>
-                </td>
-
-                <td>
-                    <?php if (
-                        $item['unit'] === null
-                        || $item['unit'] === ''
-                    ): ?>
-                        –
-                    <?php else: ?>
-                        <?= $escape($item['unit']) ?>
-                    <?php endif; ?>
-                </td>
-
-                <td>
-                    <?= $escape(
-                        $formatQuantity(
-                            $item['quantity']
-                        )
-                    ) ?>
-                </td>
-
-                <td>
-                    <?= $escape(
-                        $formatMoneyAmount(
-                            $item['unit_price']
-                        )
-                    ) ?>
-                </td>
-
-                <td>
-                    <?= $escape(
-                        $formatMoneyAmount(
-                            $item['line_total_amount']
-                        )
-                    ) ?>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-
-        </tbody>
-    </table>
-
-<?php endif; ?>
-
-<h3>Budget</h3>
-
-<dl>
-    <dt>Tagesbudget</dt>
-
-    <dd>
-        <?= $escape(
-            $formatMoneyCents(
-                (int) $summary['budget_cents']
-            )
-        ) ?>
-    </dd>
-
-    <dt>Warenwert</dt>
-
-    <dd>
-        <?= $escape(
-            $formatMoneyCents(
-                (int) $summary['total_cents']
-            )
-        ) ?>
-    </dd>
-
-    <dt>Verbleibend</dt>
-
-    <dd>
-        <?= $escape(
-            $formatMoneyCents(
-                $remainingBudgetCents
-            )
-        ) ?>
-    </dd>
-</dl>
-
-<?php if ($remainingBudgetCents < 0): ?>
-
-    <p>
-        <strong>
-            Achtung: Das Tagesbudget wird um
+    <?php if ($remainingBudgetCents < 0): ?>
+        <div class="alert alert--danger">
+            <strong>Tagesbudget überschritten.</strong>
+            Die Bestellung liegt um
             <?= $escape(
                 $formatMoneyCents(
                     abs($remainingBudgetCents)
                 )
             ) ?>
-            überschritten.
-        </strong>
-    </p>
-
-<?php endif; ?>
-
-<?php if (
-    !$isSubmitted
-    && $isOrderingOpen
-): ?>
-
-    <p>
-        <a
-            href="/group/order.php?date=<?= $escape(
-                rawurlencode($deliveryDate)
-            ) ?>"
-        >
-            Bestellung bearbeiten
-        </a>
-    </p>
-
-    <?php if ($summary['items'] !== []): ?>
-
-        <form
-            method="post"
-            action="/group/review.php?date=<?= $escape(
-                rawurlencode($deliveryDate)
-            ) ?>"
-        >
-            <input
-                type="hidden"
-                name="csrf_token"
-                value="<?= $escape($csrfToken) ?>"
-            >
-
-            <input
-                type="hidden"
-                name="delivery_date"
-                value="<?= $escape($deliveryDate) ?>"
-            >
-
-            <button
-                type="submit"
-                name="action"
-                value="submit"
-            >
-                Bestellung definitiv bestätigen
-            </button>
-        </form>
-
-        <p>
-            Nach der Bestätigung kann die Gruppe diese
-            Bestellung nicht mehr verändern.
-        </p>
-
+            über dem verfügbaren Budget.
+        </div>
     <?php endif; ?>
 
-<?php elseif ($isSubmitted): ?>
+    <section class="panel">
+        <div class="panel__header">
+            <div>
+                <h2>Bestellpositionen</h2>
+                <span class="small-muted">
+                    <?= count($summary['items']) ?> ausgewählte Produkte
+                </span>
+            </div>
+        </div>
 
-    <p>
-        Diese Bestellung ist abgeschlossen und kann von
-        der Gruppe nicht mehr bearbeitet werden.
-    </p>
+        <?php if ($summary['items'] === []): ?>
+            <div class="empty-state">
+                Die Bestellung enthält noch keine Produkte.
+            </div>
+        <?php else: ?>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Produkt</th>
+                            <th>Einheit</th>
+                            <th>Packungen</th>
+                            <th>Preis / Packung</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
 
-<?php else: ?>
+                    <tbody>
+                    <?php foreach ($summary['items'] as $item): ?>
+                        <tr>
+                            <td>
+                                <strong>
+                                    <?= $escape($item['product_name']) ?>
+                                </strong>
 
-    <p>
-        Der vorhandene Entwurf bleibt zur Kontrolle sichtbar,
-        kann nach dem Bestellschluss aber nicht mehr geändert
-        oder bestätigt werden.
-    </p>
+                                <?php if (
+                                    $item['article_number'] !== null
+                                    && $item['article_number'] !== ''
+                                ): ?>
+                                    <br>
+                                    <span class="small-muted">
+                                        Art.-Nr.
+                                        <?= $escape($item['article_number']) ?>
+                                    </span>
+                                <?php endif; ?>
+                            </td>
 
-<?php endif; ?>
+                            <td>
+                                <?= $item['unit'] === null
+                                    || $item['unit'] === ''
+                                        ? '–'
+                                        : $escape($item['unit']) ?>
+                            </td>
+
+                            <td class="numeric">
+                                <strong>
+                                    <?= (int) $item['quantity'] ?>
+                                </strong>
+                            </td>
+
+                            <td class="numeric">
+                                <?= $escape(
+                                    $formatMoneyAmount(
+                                        $item['unit_price']
+                                    )
+                                ) ?>
+                            </td>
+
+                            <td class="numeric">
+                                <strong>
+                                    <?= $escape(
+                                        $formatMoneyAmount(
+                                            $item['line_total_amount']
+                                        )
+                                    ) ?>
+                                </strong>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </section>
+
+    <section class="panel panel--soft">
+        <div class="review-actions">
+
+            <?php if (
+                !$isSubmitted
+                && $isOrderingOpen
+            ): ?>
+
+                <a
+                    class="button button--secondary"
+                    href="/group/order.php?date=<?= $escape(
+                        rawurlencode($deliveryDate)
+                    ) ?>"
+                >
+                    Bestellung bearbeiten
+                </a>
+
+                <?php if ($summary['items'] !== []): ?>
+                    <form
+                        method="post"
+                        action="/group/review.php?date=<?= $escape(
+                            rawurlencode($deliveryDate)
+                        ) ?>"
+                    >
+                        <input
+                            type="hidden"
+                            name="csrf_token"
+                            value="<?= $escape($csrfToken) ?>"
+                        >
+
+                        <input
+                            type="hidden"
+                            name="delivery_date"
+                            value="<?= $escape($deliveryDate) ?>"
+                        >
+
+                        <button
+                            type="submit"
+                            name="action"
+                            value="submit"
+                        >
+                            Bestellung definitiv bestätigen
+                        </button>
+                    </form>
+                <?php endif; ?>
+
+            <?php elseif ($isSubmitted): ?>
+
+                <span class="badge badge--success">
+                    Bestellung abgeschlossen
+                </span>
+
+            <?php else: ?>
+
+                <span class="badge badge--neutral">
+                    Bestellung geschlossen
+                </span>
+
+            <?php endif; ?>
+
+        </div>
+
+        <?php if (
+            !$isSubmitted
+            && $isOrderingOpen
+            && $summary['items'] !== []
+        ): ?>
+            <p class="review-note">
+                Nach der definitiven Bestätigung kann die Gruppe diese
+                Bestellung nicht mehr verändern. Die Administration kann
+                bei Bedarf weiterhin Korrekturen vornehmen.
+            </p>
+        <?php elseif ($isSubmitted): ?>
+            <p class="review-note">
+                Diese Bestellung ist abgeschlossen und für die Gruppe
+                schreibgeschützt.
+            </p>
+        <?php endif; ?>
+    </section>
+
+</main>
 
 </body>
 </html>

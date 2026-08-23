@@ -8,21 +8,24 @@ use App\Repository\SettingsRepository;
 require dirname(__DIR__) . '/config/bootstrap.php';
 
 $campName = 'Essensbestellung';
+$databaseError = null;
 
 try {
     $pdo = Database::connect();
 
-    $settingsRepository =
-        new SettingsRepository($pdo);
+    $settingsRepository = new SettingsRepository($pdo);
+    $settings = $settingsRepository->get();
 
-    $settings =
-        $settingsRepository->get();
-
-    $campName =
-        (string) $settings['camp_name'];
+    if (
+        isset($settings['camp_name'])
+        && trim((string) $settings['camp_name']) !== ''
+    ) {
+        $campName = (string) $settings['camp_name'];
+    }
 } catch (Throwable) {
-    // Die Startseite bleibt auch bei einer noch nicht
-    // vollständig eingerichteten Datenbank erreichbar.
+    $databaseError =
+        'Die Anwendung kann momentan nicht auf die Datenbank zugreifen. '
+        . 'Bitte versuche es später erneut oder informiere die Administration.';
 }
 
 $escape = static function (mixed $value): string {
@@ -32,7 +35,6 @@ $escape = static function (mixed $value): string {
         'UTF-8'
     );
 };
-
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -44,26 +46,91 @@ $escape = static function (mixed $value): string {
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title><?= $escape($campName) ?></title>
+    <title><?= $escape($campName) ?> – Essensbestellung</title>
+
+    <link rel="stylesheet" href="/assets/app.css">
+    <link rel="stylesheet" href="/assets/public.css">
 </head>
 
-<body>
+<body class="home-page">
 
-<h1><?= $escape($campName) ?></h1>
+<main class="home-shell">
 
-<h2>Essensbestellung</h2>
+    <section class="home-hero">
 
-<p>
-    <a href="/group/">
-        Zur Gruppenbestellung
-    </a>
-</p>
+        <div class="brand">
+            <span class="brand__mark">EB</span>
 
-<p>
-    <a href="/admin/groups.php">
-        Administration
-    </a>
-</p>
+            <span class="brand__text">
+                <span class="brand__title">
+                    <?= $escape($campName) ?>
+                </span>
+
+                <span class="brand__subtitle">
+                    Essensbestellung
+                </span>
+            </span>
+        </div>
+
+        <p class="eyebrow">Lagerverpflegung</p>
+
+        <h1>Essensbestellungen einfach verwalten</h1>
+
+        <p class="lead">
+            Gruppen erfassen ihre Bestellungen selbst. Die Administration
+            behält Budgets, Liefertage und Sammelbestellungen im Überblick.
+        </p>
+
+    </section>
+
+    <?php if ($databaseError !== null): ?>
+
+        <div class="alert alert--danger">
+            <strong>Datenbankverbindung nicht verfügbar.</strong>
+            <p><?= $escape($databaseError) ?></p>
+        </div>
+
+    <?php endif; ?>
+
+    <section class="entry-grid" aria-label="Bereich auswählen">
+
+        <a class="entry-card" href="/group/login.php">
+            <span class="entry-card__icon">G</span>
+
+            <span class="entry-card__label">Gruppenbereich</span>
+
+            <h2>Bestellung erfassen</h2>
+
+            <p>
+                Als Lagergruppe anmelden, Liefertag auswählen, Produkte
+                bestellen und die Bestellung definitiv bestätigen.
+            </p>
+
+            <span class="entry-card__action">
+                Zum Gruppenlogin →
+            </span>
+        </a>
+
+        <a class="entry-card" href="/admin/login.php">
+            <span class="entry-card__icon">A</span>
+
+            <span class="entry-card__label">Administration</span>
+
+            <h2>Lager verwalten</h2>
+
+            <p>
+                Gruppen, Produkte und Einstellungen pflegen, Bestellungen
+                kontrollieren sowie Tagesauswertungen und Exporte erstellen.
+            </p>
+
+            <span class="entry-card__action">
+                Zur Administration →
+            </span>
+        </a>
+
+    </section>
+
+</main>
 
 </body>
 </html>

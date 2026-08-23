@@ -1,0 +1,126 @@
+.picking-summary {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    margin-bottom: 1.5rem;
+}
+
+.picking-summary__item {
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-small);
+    padding: 0.8rem;
+}
+
+.picking-summary__label {
+    color: var(--muted);
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 750;
+    margin-bottom: 0.25rem;
+}
+
+.picking-summary__value {
+    display: block;
+    font-weight: 800;
+}
+
+.picking-check-column {
+    text-align: center;
+    width: 3.5rem;
+}
+
+.picking-check-box {
+    border: 1.5px solid var(--text);
+    display: inline-block;
+    height: 1rem;
+    vertical-align: middle;
+    width: 1rem;
+}
+
+.picking-group {
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+.picking-notes {
+    border-bottom: 1px solid var(--border);
+    height: 2.8rem;
+    margin-top: 0.5rem;
+}
+
+@media print {
+    @page {
+        margin: 12mm;
+        size: A4 portrait;
+    }
+
+    body {
+        background: #fff;
+        color: #000;
+        font-size: 10pt;
+    }
+
+    .topbar,
+    .no-print {
+        display: none !important;
+    }
+
+    .app-container {
+        max-width: none;
+        padding: 0;
+    }
+
+    .panel,
+    .stat,
+    .picking-summary__item,
+    .alert {
+        background: #fff !important;
+        border-color: #777 !important;
+        box-shadow: none !important;
+        color: #000 !important;
+    }
+
+    .page-header {
+        margin-bottom: 5mm;
+    }
+
+    .page-header .eyebrow,
+    .small-muted,
+    .lead {
+        color: #333 !important;
+    }
+
+    table {
+        font-size: 9pt;
+    }
+
+    th,
+    td {
+        border: 1px solid #777;
+        color: #000 !important;
+        padding: 0.35rem 0.45rem;
+    }
+
+    tbody tr:hover {
+        background: transparent;
+    }
+
+    .picking-check-box {
+        border-color: #000;
+    }
+
+    .picking-group {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    thead {
+        display: table-header-group;
+    }
+
+    tr {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}

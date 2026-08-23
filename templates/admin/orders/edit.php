@@ -96,84 +96,14 @@ $statusClass = match (true) {
     default => 'badge--warning',
 };
 
+$adminPageTitle = 'Bestellung bearbeiten – ' . (string) $group['name'];
+$adminActiveSection = 'orders';
+$adminExtraStylesheets = ['/assets/order.css'];
+
+require dirname(__DIR__)
+    . '/partials/layout_start.php';
 ?>
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>
-        Bestellung bearbeiten – <?= $escape($group['name']) ?>
-    </title>
-
-    <link rel="stylesheet" href="/assets/app.css">
-    <link rel="stylesheet" href="/assets/order.css">
-</head>
-
-<body>
-
-<header class="topbar">
-    <div class="topbar__inner">
-        <a class="brand" href="/admin/orders.php">
-            <span class="brand__mark">EB</span>
-
-            <span class="brand__text">
-                <span class="brand__title">
-                    <?= $escape($settings['camp_name']) ?>
-                </span>
-
-                <span class="brand__subtitle">
-                    Administration
-                </span>
-            </span>
-        </a>
-
-        <div class="topbar__actions">
-            <nav
-                class="nav"
-                aria-label="Administration"
-            >
-                <a
-                    href="/admin/orders.php"
-                    aria-current="page"
-                >
-                    Bestellungen
-                </a>
-
-                <a href="/admin/groups.php">Gruppen</a>
-                <a href="/admin/products.php">Produkte</a>
-                <a href="/admin/categories.php">Kategorien</a>
-                <a href="/admin/settings.php">Einstellungen</a>
-            </nav>
-
-            <form
-                class="inline-form"
-                method="post"
-                action="/admin/logout.php"
-            >
-                <input
-                    type="hidden"
-                    name="csrf_token"
-                    value="<?= $escape($adminCsrfToken) ?>"
-                >
-
-                <button
-                    class="button--secondary button--small"
-                    type="submit"
-                >
-                    Abmelden
-                </button>
-            </form>
-        </div>
-    </div>
-</header>
-
-<main class="app-container">
 
     <div class="page-header">
         <div class="page-header__copy">
@@ -996,7 +926,6 @@ $statusClass = match (true) {
         })();
     </script>
 
-</main>
-
-</body>
-</html>
+<?php
+require dirname(__DIR__)
+    . '/partials/layout_end.php';
