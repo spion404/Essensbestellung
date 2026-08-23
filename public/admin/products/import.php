@@ -11,8 +11,6 @@ use Throwable;
 require dirname(__DIR__, 3)
     . '/config/bootstrap.php';
 
-session_start();
-
 $pdo = Database::connect();
 
 $productRepository =
