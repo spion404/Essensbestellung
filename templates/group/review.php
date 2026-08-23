@@ -55,14 +55,8 @@ $formatDate = static function (string $date): string {
         . $parsedDate->format('d.m.Y');
 };
 
-$formatQuantity = static function (string $quantity): string {
-    return rtrim(
-        rtrim(
-            $quantity,
-            '0'
-        ),
-        '.'
-    );
+$formatQuantity = static function (mixed $quantity): string {
+    return (string) (int) $quantity;
 };
 
 $isSubmitted =

@@ -389,7 +389,7 @@ $formatDate = static function (string $date): string {
                         <th>Produkt</th>
                         <th>Details</th>
                         <th>Preis</th>
-                        <th>Menge</th>
+                        <th>Packungen</th>
                         <th>Positionswert</th>
                     </tr>
                 </thead>
@@ -524,8 +524,8 @@ $formatDate = static function (string $date): string {
                                 name="quantities[<?= $productId ?>]"
                                 value="<?= $escape($quantity) ?>"
                                 min="0"
-                                step="0.001"
-                                inputmode="decimal"
+                                step="1"
+                                inputmode="numeric"
                                 autocomplete="off"
                                 data-price-cents="<?= $priceCents ?>"
                             >
@@ -679,13 +679,10 @@ $formatDate = static function (string $date): string {
             };
 
             const getQuantity = (input) => {
-                const value = Number(
-                    String(input.value || '')
-                        .replace(',', '.')
-                );
+                const value = Number(input.value);
 
                 if (
-                    !Number.isFinite(value)
+                    !Number.isInteger(value)
                     || value <= 0
                 ) {
                     return 0;
@@ -708,9 +705,7 @@ $formatDate = static function (string $date): string {
                     return 0;
                 }
 
-                return Math.round(
-                    priceCents * quantity
-                );
+                return priceCents * quantity;
             };
 
             const updateLineTotal = (input) => {
@@ -866,7 +861,9 @@ $formatDate = static function (string $date): string {
                     searchInput.value = '';
                     categoryFilter.value = '';
                     selectedOnly.checked = false;
+
                     updateFilters();
+
                     searchInput.focus();
                 }
             );

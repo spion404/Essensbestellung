@@ -152,7 +152,7 @@ final class OrderService
         foreach ($items as $item) {
             $totalCents += $this->calculateLineTotalCents(
                 (string) $item['unit_price'],
-                (string) $item['quantity']
+                (int) $item['quantity']
             );
         }
 
@@ -252,74 +252,41 @@ final class OrderService
 
     private function normalizeQuantity(
         string $value
-    ): ?string {
+    ): ?int {
         $value = trim($value);
 
         if ($value === '') {
             return null;
         }
 
-        $value = str_replace(',', '.', $value);
-
-        if (
-            preg_match(
-                '/^\d+(?:\.\d{1,3})?$/',
-                $value
-            ) !== 1
-        ) {
+        if (!ctype_digit($value)) {
             throw new InvalidArgumentException(
-                'Mengen dürfen höchstens drei Nachkommastellen haben.'
+                'Die Anzahl Packungen muss eine ganze Zahl sein.'
             );
         }
 
-        [$wholePart, $decimalPart] = array_pad(
-            explode('.', $value, 2),
-            2,
-            ''
-        );
+        $quantity = (int) $value;
 
-        $decimalPart = str_pad(
-            $decimalPart,
-            3,
-            '0'
-        );
-
-        $thousandths = ((int) $wholePart * 1000)
-            + (int) $decimalPart;
-
-        if ($thousandths === 0) {
+        if ($quantity === 0) {
             return null;
         }
 
-        if ($thousandths > 9_999_999_999) {
+        if ($quantity > 4_294_967_295) {
             throw new InvalidArgumentException(
-                'Die eingegebene Menge ist zu gross.'
+                'Die eingegebene Anzahl Packungen ist zu gross.'
             );
         }
 
-        return sprintf(
-            '%d.%03d',
-            intdiv($thousandths, 1000),
-            $thousandths % 1000
-        );
+        return $quantity;
     }
 
     private function calculateLineTotalCents(
         string $unitPrice,
-        string $quantity
+        int $quantity
     ): int {
-        $unitPriceCents = $this->moneyToCents(
+        return $this->moneyToCents(
             $unitPrice
-        );
-
-        $quantityThousandths = $this->quantityToThousandths(
-            $quantity
-        );
-
-        return intdiv(
-            ($unitPriceCents * $quantityThousandths) + 500,
-            1000
-        );
+        ) * $quantity;
     }
 
     private function moneyToCents(string $amount): int
@@ -348,30 +315,6 @@ final class OrderService
         );
 
         return ((int) $wholePart * 100)
-            + (int) $decimalPart;
-    }
-
-    private function quantityToThousandths(
-        string $quantity
-    ): int {
-        if (
-            preg_match(
-                '/^\d+\.\d{3}$/',
-                $quantity
-            ) !== 1
-        ) {
-            throw new InvalidArgumentException(
-                'Ungültige gespeicherte Menge.'
-            );
-        }
-
-        [$wholePart, $decimalPart] = explode(
-            '.',
-            $quantity,
-            2
-        );
-
-        return ((int) $wholePart * 1000)
             + (int) $decimalPart;
     }
 }

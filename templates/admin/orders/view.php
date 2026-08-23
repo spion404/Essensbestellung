@@ -165,15 +165,7 @@ $statusLabels = [
                 </td>
 
                 <td>
-                    <?= $escape(
-                        rtrim(
-                            rtrim(
-                                (string) $item['quantity'],
-                                '0'
-                            ),
-                            '.'
-                        )
-                    ) ?>
+                    <?= (int) $item['quantity'] ?>
                 </td>
 
                 <td>
