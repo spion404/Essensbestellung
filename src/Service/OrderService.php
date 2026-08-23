@@ -38,64 +38,79 @@ final class OrderService
             $deliveryDate
         );
 
-        $items = [];
-        $totalCents = 0;
-
-        foreach ($rawQuantities as $productIdValue => $rawQuantity) {
-            $productId = $this->normalizeProductId(
-                $productIdValue
+        $prepared =
+            $this->prepareItems(
+                $rawQuantities
             );
 
-            $quantity = $this->normalizeQuantity(
-                (string) $rawQuantity
+        $orderId =
+            $this->orderRepository->saveDraft(
+                $groupId,
+                $deliveryDate,
+                $prepared['items']
             );
 
-            if ($quantity === null) {
-                continue;
-            }
+        return $this->buildSaveResult(
+            $orderId,
+            'draft',
+            $day,
+            $prepared['total_cents']
+        );
+    }
 
-            $product = $this->productRepository->findById(
-                $productId
+    public function saveAsAdmin(
+        int $groupId,
+        string $deliveryDate,
+        array $rawQuantities,
+        bool $submit = false
+    ): array {
+        $this->findBudgetDay(
+            $groupId,
+            $deliveryDate
+        );
+
+        $existingSnapshots =
+            $this->findExistingSnapshots(
+                $groupId,
+                $deliveryDate
             );
 
-            if ($product === null) {
-                throw new InvalidArgumentException(
-                    'Ein ausgewähltes Produkt existiert nicht mehr.'
-                );
-            }
+        $prepared =
+            $this->prepareItems(
+                $rawQuantities,
+                $existingSnapshots
+            );
 
-            $unitPrice = (string) $product['price'];
-
-            $items[] = [
-                'product_id' => $productId,
-                'article_number' => $product['article_number'],
-                'product_name' => (string) $product['name'],
-                'unit' => $product['unit'],
-                'unit_price' => $unitPrice,
-                'quantity' => $quantity,
-            ];
-
-            $totalCents += $this->calculateLineTotalCents(
-                $unitPrice,
-                $quantity
+        if (
+            $prepared['items'] === []
+            && !$this->hasOrphanedItems(
+                $groupId,
+                $deliveryDate
+            )
+        ) {
+            throw new RuntimeException(
+                'Die Admin-Bestellung muss mindestens '
+                . 'ein Produkt enthalten.'
             );
         }
 
-        $orderId = $this->orderRepository->saveDraft(
+        $orderId =
+            $this->orderRepository->saveAsAdmin(
+                $groupId,
+                $deliveryDate,
+                $prepared['items']
+            );
+
+        if ($submit) {
+            $this->orderRepository->submit(
+                $orderId
+            );
+        }
+
+        return $this->getSummary(
             $groupId,
-            $deliveryDate,
-            $items
+            $deliveryDate
         );
-
-        $budgetCents = (int) $day['budget_cents'];
-
-        return [
-            'order_id' => $orderId,
-            'status' => 'draft',
-            'budget_cents' => $budgetCents,
-            'total_cents' => $totalCents,
-            'remaining_budget_cents' => $budgetCents - $totalCents,
-        ];
     }
 
     public function submit(
@@ -106,27 +121,17 @@ final class OrderService
             $deliveryDate
         );
 
-        $this->findBudgetDay(
+        return $this->submitWithoutCutoff(
             $groupId,
             $deliveryDate
         );
+    }
 
-        $order = $this->orderRepository->findByGroupAndDate(
-            $groupId,
-            $deliveryDate
-        );
-
-        if ($order === null) {
-            throw new RuntimeException(
-                'Für diesen Liefertag existiert noch keine Bestellung.'
-            );
-        }
-
-        $this->orderRepository->submit(
-            (int) $order['id']
-        );
-
-        return $this->getSummary(
+    public function submitAsAdmin(
+        int $groupId,
+        string $deliveryDate
+    ): array {
+        return $this->submitWithoutCutoff(
             $groupId,
             $deliveryDate
         );
@@ -141,31 +146,36 @@ final class OrderService
             $deliveryDate
         );
 
-        $order = $this->orderRepository->findByGroupAndDate(
-            $groupId,
-            $deliveryDate
-        );
+        $order =
+            $this->orderRepository->findByGroupAndDate(
+                $groupId,
+                $deliveryDate
+            );
 
         if ($order === null) {
             throw new RuntimeException(
-                'Für diesen Liefertag existiert noch keine Bestellung.'
+                'Für diesen Liefertag existiert '
+                . 'noch keine Bestellung.'
             );
         }
 
-        $items = $this->orderRepository->findItems(
-            (int) $order['id']
-        );
+        $items =
+            $this->orderRepository->findItems(
+                (int) $order['id']
+            );
 
         $totalCents = 0;
 
         foreach ($items as $item) {
-            $totalCents += $this->calculateLineTotalCents(
-                (string) $item['unit_price'],
-                (int) $item['quantity']
-            );
+            $totalCents +=
+                $this->calculateLineTotalCents(
+                    (string) $item['unit_price'],
+                    (int) $item['quantity']
+                );
         }
 
-        $budgetCents = (int) $day['budget_cents'];
+        $budgetCents =
+            (int) $day['budget_cents'];
 
         return [
             'order' => $order,
@@ -173,8 +183,41 @@ final class OrderService
             'budget_day' => $day,
             'budget_cents' => $budgetCents,
             'total_cents' => $totalCents,
-            'remaining_budget_cents' => $budgetCents - $totalCents,
+            'remaining_budget_cents' =>
+                $budgetCents - $totalCents,
         ];
+    }
+
+    private function submitWithoutCutoff(
+        int $groupId,
+        string $deliveryDate
+    ): array {
+        $this->findBudgetDay(
+            $groupId,
+            $deliveryDate
+        );
+
+        $order =
+            $this->orderRepository->findByGroupAndDate(
+                $groupId,
+                $deliveryDate
+            );
+
+        if ($order === null) {
+            throw new RuntimeException(
+                'Für diesen Liefertag existiert '
+                . 'noch keine Bestellung.'
+            );
+        }
+
+        $this->orderRepository->submit(
+            (int) $order['id']
+        );
+
+        return $this->getSummary(
+            $groupId,
+            $deliveryDate
+        );
     }
 
     private function assertOrderingOpen(
@@ -189,6 +232,174 @@ final class OrderService
         );
     }
 
+    private function prepareItems(
+        array $rawQuantities,
+        array $existingSnapshots = []
+    ): array {
+        $items = [];
+        $totalCents = 0;
+
+        foreach (
+            $rawQuantities
+            as $productIdValue => $rawQuantity
+        ) {
+            $productId =
+                $this->normalizeProductId(
+                    $productIdValue
+                );
+
+            $quantity =
+                $this->normalizeQuantity(
+                    (string) $rawQuantity
+                );
+
+            if ($quantity === null) {
+                continue;
+            }
+
+            $product =
+                $this->productRepository->findById(
+                    $productId
+                );
+
+            if ($product === null) {
+                throw new InvalidArgumentException(
+                    'Ein ausgewähltes Produkt '
+                    . 'existiert nicht mehr.'
+                );
+            }
+
+            $snapshot =
+                $existingSnapshots[$productId]
+                ?? null;
+
+            if ($snapshot !== null) {
+                $articleNumber =
+                    $snapshot['article_number'];
+
+                $productName =
+                    (string) $snapshot['product_name'];
+
+                $unit =
+                    $snapshot['unit'];
+
+                $unitPrice =
+                    (string) $snapshot['unit_price'];
+            } else {
+                $articleNumber =
+                    $product['article_number'];
+
+                $productName =
+                    (string) $product['name'];
+
+                $unit =
+                    $product['unit'];
+
+                $unitPrice =
+                    (string) $product['price'];
+            }
+
+            $items[] = [
+                'product_id' => $productId,
+                'article_number' => $articleNumber,
+                'product_name' => $productName,
+                'unit' => $unit,
+                'unit_price' => $unitPrice,
+                'quantity' => $quantity,
+            ];
+
+            $totalCents +=
+                $this->calculateLineTotalCents(
+                    $unitPrice,
+                    $quantity
+                );
+        }
+
+        return [
+            'items' => $items,
+            'total_cents' => $totalCents,
+        ];
+    }
+
+    private function findExistingSnapshots(
+        int $groupId,
+        string $deliveryDate
+    ): array {
+        $order =
+            $this->orderRepository->findByGroupAndDate(
+                $groupId,
+                $deliveryDate
+            );
+
+        if ($order === null) {
+            return [];
+        }
+
+        $snapshots = [];
+
+        foreach (
+            $this->orderRepository->findItems(
+                (int) $order['id']
+            ) as $item
+        ) {
+            if ($item['product_id'] === null) {
+                continue;
+            }
+
+            $snapshots[
+                (int) $item['product_id']
+            ] = $item;
+        }
+
+        return $snapshots;
+    }
+
+    private function hasOrphanedItems(
+        int $groupId,
+        string $deliveryDate
+    ): bool {
+        $order =
+            $this->orderRepository->findByGroupAndDate(
+                $groupId,
+                $deliveryDate
+            );
+
+        if ($order === null) {
+            return false;
+        }
+
+        foreach (
+            $this->orderRepository->findItems(
+                (int) $order['id']
+            ) as $item
+        ) {
+            if ($item['product_id'] === null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function buildSaveResult(
+        int $orderId,
+        string $status,
+        array $day,
+        int $totalCents
+    ): array {
+        $budgetCents =
+            (int) $day['budget_cents'];
+
+        return [
+            'order_id' => $orderId,
+            'status' => $status,
+            'budget_cents' => $budgetCents,
+            'total_cents' => $totalCents,
+            'remaining_budget_cents' =>
+                $budgetCents - $totalCents,
+        ];
+    }
+
     private function findBudgetDay(
         int $groupId,
         string $deliveryDate
@@ -199,13 +410,15 @@ final class OrderService
             );
         }
 
-        $deliveryDate = $this->normalizeDate(
-            $deliveryDate
-        );
+        $deliveryDate =
+            $this->normalizeDate(
+                $deliveryDate
+            );
 
-        $group = $this->groupRepository->findById(
-            $groupId
-        );
+        $group =
+            $this->groupRepository->findById(
+                $groupId
+            );
 
         if ($group === null) {
             throw new InvalidArgumentException(
@@ -213,12 +426,14 @@ final class OrderService
             );
         }
 
-        $settings = $this->settingsRepository->get();
+        $settings =
+            $this->settingsRepository->get();
 
-        $calculation = $this->dailyBudgetService->calculate(
-            $settings,
-            $group
-        );
+        $calculation =
+            $this->dailyBudgetService->calculate(
+                $settings,
+                $group
+            );
 
         foreach ($calculation['days'] as $day) {
             if ($day['date'] === $deliveryDate) {
@@ -232,14 +447,16 @@ final class OrderService
         );
     }
 
-    private function normalizeDate(string $value): string
-    {
+    private function normalizeDate(
+        string $value
+    ): string {
         $value = trim($value);
 
-        $date = DateTimeImmutable::createFromFormat(
-            '!Y-m-d',
-            $value
-        );
+        $date =
+            DateTimeImmutable::createFromFormat(
+                '!Y-m-d',
+                $value
+            );
 
         if (
             $date === false
@@ -282,7 +499,8 @@ final class OrderService
 
         if (!ctype_digit($value)) {
             throw new InvalidArgumentException(
-                'Die Anzahl Packungen muss eine ganze Zahl sein.'
+                'Die Anzahl Packungen muss '
+                . 'eine ganze Zahl sein.'
             );
         }
 
@@ -294,7 +512,8 @@ final class OrderService
 
         if ($quantity > 4_294_967_295) {
             throw new InvalidArgumentException(
-                'Die eingegebene Anzahl Packungen ist zu gross.'
+                'Die eingegebene Anzahl Packungen '
+                . 'ist zu gross.'
             );
         }
 
@@ -310,8 +529,9 @@ final class OrderService
         ) * $quantity;
     }
 
-    private function moneyToCents(string $amount): int
-    {
+    private function moneyToCents(
+        string $amount
+    ): int {
         if (
             preg_match(
                 '/^\d+(?:\.\d{1,2})?$/',
@@ -323,17 +543,19 @@ final class OrderService
             );
         }
 
-        [$wholePart, $decimalPart] = array_pad(
-            explode('.', $amount, 2),
-            2,
-            ''
-        );
+        [$wholePart, $decimalPart] =
+            array_pad(
+                explode('.', $amount, 2),
+                2,
+                ''
+            );
 
-        $decimalPart = str_pad(
-            $decimalPart,
-            2,
-            '0'
-        );
+        $decimalPart =
+            str_pad(
+                $decimalPart,
+                2,
+                '0'
+            );
 
         return ((int) $wholePart * 100)
             + (int) $decimalPart;
