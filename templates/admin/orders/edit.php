@@ -10,52 +10,46 @@ $escape = static function (mixed $value): string {
     );
 };
 
-$formatMoneyCents =
-    static function (int $cents): string {
-        return 'CHF ' . number_format(
-            $cents / 100,
-            2,
-            '.',
-            "'"
-        );
-    };
+$formatMoneyCents = static function (int $cents): string {
+    return 'CHF ' . number_format(
+        $cents / 100,
+        2,
+        '.',
+        "'"
+    );
+};
 
-$formatMoneyAmount =
-    static function (mixed $amount): string {
-        return 'CHF ' . number_format(
-            (float) $amount,
-            2,
-            '.',
-            "'"
-        );
-    };
+$formatMoneyAmount = static function (mixed $amount): string {
+    return 'CHF ' . number_format(
+        (float) $amount,
+        2,
+        '.',
+        "'"
+    );
+};
 
-$moneyToCents =
-    static function (string $amount): int {
-        [$wholePart, $decimalPart] =
-            array_pad(
-                explode('.', $amount, 2),
-                2,
-                ''
-            );
+$moneyToCents = static function (string $amount): int {
+    [$wholePart, $decimalPart] = array_pad(
+        explode('.', $amount, 2),
+        2,
+        ''
+    );
 
-        $decimalPart =
-            str_pad(
-                $decimalPart,
-                2,
-                '0'
-            );
+    $decimalPart = str_pad(
+        $decimalPart,
+        2,
+        '0'
+    );
 
-        return ((int) $wholePart * 100)
-            + (int) $decimalPart;
-    };
+    return ((int) $wholePart * 100)
+        + (int) $decimalPart;
+};
 
 $formatDate = static function (string $date): string {
-    $parsedDate =
-        DateTimeImmutable::createFromFormat(
-            '!Y-m-d',
-            $date
-        );
+    $parsedDate = DateTimeImmutable::createFromFormat(
+        '!Y-m-d',
+        $date
+    );
 
     if ($parsedDate === false) {
         return $date;
@@ -71,9 +65,7 @@ $formatDate = static function (string $date): string {
         7 => 'Sonntag',
     ];
 
-    return $weekdays[
-        (int) $parsedDate->format('N')
-    ]
+    return $weekdays[(int) $parsedDate->format('N')]
         . ', '
         . $parsedDate->format('d.m.Y');
 };
@@ -92,6 +84,18 @@ $isSubmitted =
     $existingOrder !== null
     && $existingOrder['status'] === 'submitted';
 
+$statusLabel = match (true) {
+    $existingOrder === null => 'Noch keine Bestellung',
+    $isSubmitted => 'Bestätigt',
+    default => 'Entwurf',
+};
+
+$statusClass = match (true) {
+    $existingOrder === null => 'badge--neutral',
+    $isSubmitted => 'badge--success',
+    default => 'badge--warning',
+};
+
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -104,524 +108,649 @@ $isSubmitted =
     >
 
     <title>
-        Bestellung bearbeiten –
-        <?= $escape($group['name']) ?>
+        Bestellung bearbeiten – <?= $escape($group['name']) ?>
     </title>
 
-    <style>
-        body {
-            font-family: sans-serif;
-            line-height: 1.45;
-            margin: 2rem auto;
-            max-width: 1200px;
-            padding: 0 1rem;
-        }
-
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        th,
-        td {
-            border-bottom: 1px solid #ccc;
-            padding: 0.6rem;
-            text-align: left;
-            vertical-align: top;
-        }
-
-        .warning {
-            border: 1px solid #999;
-            padding: 0.75rem;
-        }
-
-        .product-search {
-            box-sizing: border-box;
-            margin: 1rem 0;
-            max-width: 30rem;
-            padding: 0.5rem;
-            width: 100%;
-        }
-
-        .quantity-input {
-            max-width: 7rem;
-            padding: 0.4rem;
-            width: 100%;
-        }
-
-        .actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            margin-top: 1rem;
-        }
-    </style>
+    <link rel="stylesheet" href="/assets/app.css">
+    <link rel="stylesheet" href="/assets/order.css">
 </head>
+
 <body>
 
-<p>
-    <a
-        href="/admin/orders/day.php?date=<?= $escape(
+<header class="topbar">
+    <div class="topbar__inner">
+        <a class="brand" href="/admin/orders.php">
+            <span class="brand__mark">EB</span>
+
+            <span class="brand__text">
+                <span class="brand__title">
+                    <?= $escape($settings['camp_name']) ?>
+                </span>
+
+                <span class="brand__subtitle">
+                    Administration
+                </span>
+            </span>
+        </a>
+
+        <div class="topbar__actions">
+            <nav
+                class="nav"
+                aria-label="Administration"
+            >
+                <a
+                    href="/admin/orders.php"
+                    aria-current="page"
+                >
+                    Bestellungen
+                </a>
+
+                <a href="/admin/groups.php">Gruppen</a>
+                <a href="/admin/products.php">Produkte</a>
+                <a href="/admin/categories.php">Kategorien</a>
+                <a href="/admin/settings.php">Einstellungen</a>
+            </nav>
+
+            <form
+                class="inline-form"
+                method="post"
+                action="/admin/logout.php"
+            >
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="<?= $escape($adminCsrfToken) ?>"
+                >
+
+                <button
+                    class="button--secondary button--small"
+                    type="submit"
+                >
+                    Abmelden
+                </button>
+            </form>
+        </div>
+    </div>
+</header>
+
+<main class="app-container">
+
+    <div class="page-header">
+        <div class="page-header__copy">
+            <p class="eyebrow">Admin-Korrektur</p>
+
+            <h1><?= $escape($group['name']) ?></h1>
+
+            <p class="lead">
+                <?= $escape($formatDate($deliveryDate)) ?>
+            </p>
+        </div>
+
+        <a
+            class="button button--secondary"
+            href="/admin/orders/day.php?date=<?= $escape(
+                rawurlencode($deliveryDate)
+            ) ?>"
+        >
+            Zurück zur Tagesauswertung
+        </a>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <span class="stat__label">Gruppe</span>
+            <span class="stat__value">
+                <?= $escape($group['name']) ?>
+            </span>
+        </div>
+
+        <div class="stat">
+            <span class="stat__label">Status</span>
+            <span class="stat__value">
+                <span class="badge <?= $statusClass ?>">
+                    <?= $escape($statusLabel) ?>
+                </span>
+            </span>
+        </div>
+
+        <div class="stat stat--success">
+            <span class="stat__label">Tagesbudget</span>
+            <span class="stat__value">
+                <?= $escape(
+                    $formatMoneyCents(
+                        (int) $budgetDay['budget_cents']
+                    )
+                ) ?>
+            </span>
+        </div>
+    </div>
+
+    <?php if (!$cutoffStatus['is_open']): ?>
+        <div class="alert alert--warning">
+            <strong>Admin-Override:</strong>
+            Der Bestellschluss ist bereits vorbei. Änderungen sind
+            hier weiterhin möglich, weil du im geschützten
+            Administrationsbereich arbeitest.
+        </div>
+    <?php endif; ?>
+
+    <?php if ($isSubmitted): ?>
+        <div class="alert alert--info">
+            <strong>Bereits bestätigt:</strong>
+            Gespeicherte Änderungen wirken sofort auf die
+            Sammelbestellung dieses Liefertags.
+        </div>
+    <?php endif; ?>
+
+    <?php if ($saved): ?>
+        <div class="alert alert--success">
+            <strong>Änderungen gespeichert.</strong>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($submitted): ?>
+        <div class="alert alert--success">
+            <strong>
+                Die Bestellung wurde gespeichert und bestätigt.
+            </strong>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($error !== null): ?>
+        <div class="alert alert--danger">
+            <strong><?= $escape($error) ?></strong>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($orphanItems !== []): ?>
+        <section class="panel orphan-list">
+            <div class="panel__header">
+                <div>
+                    <h2>Nicht mehr im Produktkatalog</h2>
+                    <span class="small-muted">
+                        Diese Snapshot-Positionen bleiben bei der
+                        Korrektur unverändert erhalten.
+                    </span>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Artikelnummer</th>
+                            <th>Produkt</th>
+                            <th>Einheit</th>
+                            <th>Packungen</th>
+                            <th>Preis</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                    <?php foreach ($orphanItems as $item): ?>
+                        <tr>
+                            <td>
+                                <?= $item['article_number'] === null
+                                    || $item['article_number'] === ''
+                                        ? '–'
+                                        : $escape(
+                                            $item['article_number']
+                                        ) ?>
+                            </td>
+
+                            <td>
+                                <strong>
+                                    <?= $escape($item['product_name']) ?>
+                                </strong>
+                            </td>
+
+                            <td>
+                                <?= $item['unit'] === null
+                                    || $item['unit'] === ''
+                                        ? '–'
+                                        : $escape($item['unit']) ?>
+                            </td>
+
+                            <td class="numeric">
+                                <?= (int) $item['quantity'] ?>
+                            </td>
+
+                            <td class="numeric">
+                                <?= $escape(
+                                    $formatMoneyAmount(
+                                        $item['unit_price']
+                                    )
+                                ) ?>
+                            </td>
+
+                            <td class="numeric">
+                                <?= $escape(
+                                    $formatMoneyAmount(
+                                        $item['line_total_amount']
+                                    )
+                                ) ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    <?php endif; ?>
+
+    <section class="panel order-filter-panel">
+        <div class="panel__header">
+            <div>
+                <h2>Produkte filtern</h2>
+                <span class="small-muted">
+                    Suche nach Produkt, Artikelnummer, Kategorie oder
+                    Bemerkung.
+                </span>
+            </div>
+        </div>
+
+        <div class="order-filter-grid">
+            <div
+                class="order-filter-field order-filter-field--wide"
+            >
+                <label for="product-search">Suche</label>
+
+                <input
+                    type="search"
+                    id="product-search"
+                    placeholder="Produkt, Artikelnummer oder Kategorie …"
+                    autocomplete="off"
+                >
+            </div>
+
+            <label class="order-filter-checkbox">
+                <input
+                    type="checkbox"
+                    id="selected-only"
+                >
+                Nur ausgewählte
+            </label>
+
+            <button
+                class="button--secondary"
+                type="button"
+                id="reset-filters"
+            >
+                Filter zurücksetzen
+            </button>
+        </div>
+
+        <p
+            class="order-filter-status"
+            aria-live="polite"
+        >
+            Sichtbar:
+            <strong id="visible-product-count">
+                <?= count($products) ?>
+            </strong>
+            von <?= count($products) ?>
+            · Ausgewählt:
+            <strong id="selected-product-count">0</strong>
+        </p>
+    </section>
+
+    <form
+        method="post"
+        action="/admin/orders/edit.php?group_id=<?= $groupId ?>&amp;date=<?= $escape(
             rawurlencode($deliveryDate)
         ) ?>"
     >
-        Zurück zur Tagesauswertung
-    </a>
-</p>
+        <input
+            type="hidden"
+            name="csrf_token"
+            value="<?= $escape($adminCsrfToken) ?>"
+        >
 
-<h1>Bestellung bearbeiten</h1>
+        <input
+            type="hidden"
+            name="group_id"
+            value="<?= $groupId ?>"
+        >
 
-<h2>
-    <?= $escape($group['name']) ?>
-</h2>
+        <input
+            type="hidden"
+            name="delivery_date"
+            value="<?= $escape($deliveryDate) ?>"
+        >
 
-<p>
-    <strong>
-        <?= $escape(
-            $formatDate($deliveryDate)
-        ) ?>
-    </strong>
-</p>
+        <div class="order-section-heading">
+            <h2>Produkte</h2>
 
-<p>
-    Status:
-    <strong>
-        <?php if ($existingOrder === null): ?>
-            Noch keine Bestellung
-        <?php elseif ($isSubmitted): ?>
-            Bestätigt
-        <?php else: ?>
-            Entwurf
-        <?php endif; ?>
-    </strong>
-</p>
+            <span class="order-inline-meta">
+                Bestehende Positionen behalten ihren
+                <strong>Snapshot-Preis</strong>.
+            </span>
+        </div>
 
-<p>
-    Tagesbudget:
-    <strong>
-        <?= $escape(
-            $formatMoneyCents(
-                (int) $budgetDay['budget_cents']
-            )
-        ) ?>
-    </strong>
-</p>
-
-<?php if (!$cutoffStatus['is_open']): ?>
-
-    <p class="warning">
-        <strong>Admin-Override:</strong>
-        Der Bestellschluss ist bereits vorbei.
-        Änderungen sind auf dieser Seite trotzdem
-        möglich, weil du im geschützten
-        Administrationsbereich arbeitest.
-    </p>
-
-<?php endif; ?>
-
-<?php if ($isSubmitted): ?>
-
-    <p class="warning">
-        Diese Bestellung ist bereits bestätigt.
-        Gespeicherte Änderungen wirken deshalb
-        sofort auf die Sammelbestellung.
-    </p>
-
-<?php endif; ?>
-
-<?php if ($saved): ?>
-
-    <p>
-        <strong>
-            Die Änderungen wurden gespeichert.
-        </strong>
-    </p>
-
-<?php endif; ?>
-
-<?php if ($submitted): ?>
-
-    <p>
-        <strong>
-            Die Bestellung wurde gespeichert
-            und bestätigt.
-        </strong>
-    </p>
-
-<?php endif; ?>
-
-<?php if ($error !== null): ?>
-
-    <p>
-        <strong>
-            <?= $escape($error) ?>
-        </strong>
-    </p>
-
-<?php endif; ?>
-
-<?php if ($orphanItems !== []): ?>
-
-    <h3>Nicht mehr im Produktkatalog</h3>
-
-    <p>
-        Diese Positionen stammen aus dem
-        Bestell-Snapshot und bleiben bei einer
-        Korrektur unverändert erhalten.
-    </p>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Artikelnummer</th>
-                <th>Produkt</th>
-                <th>Einheit</th>
-                <th>Packungen</th>
-                <th>Preis</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-        <?php foreach ($orphanItems as $item): ?>
-            <tr>
-                <td>
-                    <?= $item['article_number'] === null
-                        || $item['article_number'] === ''
-                            ? '–'
-                            : $escape(
-                                $item['article_number']
-                            ) ?>
-                </td>
-
-                <td>
-                    <?= $escape(
-                        $item['product_name']
-                    ) ?>
-                </td>
-
-                <td>
-                    <?= $item['unit'] === null
-                        || $item['unit'] === ''
-                            ? '–'
-                            : $escape(
-                                $item['unit']
-                            ) ?>
-                </td>
-
-                <td>
-                    <?= (int) $item['quantity'] ?>
-                </td>
-
-                <td>
-                    <?= $escape(
-                        $formatMoneyAmount(
-                            $item['unit_price']
-                        )
-                    ) ?>
-                </td>
-
-                <td>
-                    <?= $escape(
-                        $formatMoneyAmount(
-                            $item['line_total_amount']
-                        )
-                    ) ?>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-
-        </tbody>
-    </table>
-
-<?php endif; ?>
-
-<h3>Produkte</h3>
-
-<input
-    class="product-search"
-    type="search"
-    id="product-search"
-    placeholder="Produkt, Artikelnummer oder Kategorie suchen …"
-    autocomplete="off"
->
-
-<form
-    method="post"
-    action="/admin/orders/edit.php?group_id=<?= $groupId ?>&amp;date=<?= $escape(
-        rawurlencode($deliveryDate)
-    ) ?>"
->
-    <input
-        type="hidden"
-        name="csrf_token"
-        value="<?= $escape($adminCsrfToken) ?>"
-    >
-
-    <input
-        type="hidden"
-        name="group_id"
-        value="<?= $groupId ?>"
-    >
-
-    <input
-        type="hidden"
-        name="delivery_date"
-        value="<?= $escape($deliveryDate) ?>"
-    >
-
-    <table>
-        <thead>
-            <tr>
-                <th>Produkt</th>
-                <th>Einheit</th>
-                <th>Bestellpreis</th>
-                <th>Packungen</th>
-                <th>Positionswert</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
+        <div class="product-list">
         <?php foreach ($products as $product): ?>
             <?php
-            $productId =
-                (int) $product['id'];
+            $productId = (int) $product['id'];
 
             $existingItem =
-                $existingItemsByProductId[
-                    $productId
-                ]
+                $existingItemsByProductId[$productId]
                 ?? null;
 
             $effectivePrice =
                 $existingItem !== null
-                    ? (string) $existingItem[
-                        'unit_price'
-                    ]
+                    ? (string) $existingItem['unit_price']
                     : (string) $product['price'];
 
-            $effectivePriceCents =
-                $moneyToCents(
-                    $effectivePrice
-                );
+            $effectivePriceCents = $moneyToCents(
+                $effectivePrice
+            );
 
             $quantity =
-                $quantities[
-                    (string) $productId
-                ]
+                $quantities[(string) $productId]
                 ?? '';
 
-            $searchText =
-                implode(
-                    ' ',
-                    [
-                        (string) $product['name'],
-
-                        (string) (
-                            $product['article_number']
-                            ?? ''
-                        ),
-
-                        (string) (
-                            $product['categories']
-                            ?? ''
-                        ),
-
-                        (string) (
-                            $product['remark']
-                            ?? ''
-                        ),
-                    ]
-                );
+            $searchText = implode(
+                ' ',
+                [
+                    (string) $product['name'],
+                    (string) ($product['article_number'] ?? ''),
+                    (string) ($product['categories'] ?? ''),
+                    (string) ($product['remark'] ?? ''),
+                    (string) ($product['unit'] ?? ''),
+                ]
+            );
             ?>
 
-            <tr
+            <article
+                class="product-card"
                 data-product-row
                 data-search="<?= $escape($searchText) ?>"
             >
-                <td>
-                    <strong>
-                        <?= $escape(
-                            $product['name']
-                        ) ?>
-                    </strong>
+                <div class="product-card__main">
+                    <h3 class="product-card__title">
+                        <?= $escape($product['name']) ?>
+                    </h3>
 
                     <?php if (
                         $product['article_number'] !== null
                         && $product['article_number'] !== ''
                     ): ?>
-                        <br>
-
-                        <small>
+                        <div class="product-card__article">
                             Art.-Nr.
-                            <?= $escape(
-                                $product['article_number']
-                            ) ?>
-                        </small>
+                            <?= $escape($product['article_number']) ?>
+                        </div>
                     <?php endif; ?>
+
+                    <div class="product-card__tags">
+                        <?php if (
+                            $product['categories'] !== null
+                            && $product['categories'] !== ''
+                        ): ?>
+                            <span class="product-tag">
+                                <?= $escape($product['categories']) ?>
+                            </span>
+                        <?php endif; ?>
+
+                        <?php if (
+                            $product['unit'] !== null
+                            && $product['unit'] !== ''
+                        ): ?>
+                            <span class="product-tag product-tag--muted">
+                                <?= $escape($product['unit']) ?>
+                            </span>
+                        <?php endif; ?>
+                    </div>
 
                     <?php if (
-                        $product['categories'] !== null
-                        && $product['categories'] !== ''
+                        $product['remark'] !== null
+                        && $product['remark'] !== ''
                     ): ?>
-                        <br>
-
-                        <small>
-                            <?= $escape(
-                                $product['categories']
-                            ) ?>
-                        </small>
+                        <p class="product-card__remark">
+                            <?= $escape($product['remark']) ?>
+                        </p>
                     <?php endif; ?>
-                </td>
+                </div>
 
-                <td>
-                    <?= $product['unit'] === null
-                        || $product['unit'] === ''
-                            ? '–'
-                            : $escape(
-                                $product['unit']
-                            ) ?>
-                </td>
+                <div class="product-card__price">
+                    <span class="product-card__price-label">
+                        Bestellpreis
+                    </span>
 
-                <td>
-                    <?= $escape(
-                        $formatMoneyAmount(
-                            $effectivePrice
-                        )
-                    ) ?>
+                    <span class="product-card__price-value">
+                        <?= $escape(
+                            $formatMoneyAmount($effectivePrice)
+                        ) ?>
+                    </span>
 
                     <?php if (
                         $existingItem !== null
                         && (string) $product['price']
                             !== $effectivePrice
                     ): ?>
-                        <br>
-
-                        <small>
-                            Aktueller Katalogpreis:
+                        <span class="product-card__old-price">
+                            Katalog aktuell:
                             <?= $escape(
                                 $formatMoneyAmount(
                                     $product['price']
                                 )
                             ) ?>
-                        </small>
+                        </span>
                     <?php endif; ?>
-                </td>
+                </div>
 
-                <td>
-                    <input
-                        class="quantity-input"
-                        type="number"
-                        name="quantities[<?= $productId ?>]"
-                        value="<?= $escape($quantity) ?>"
-                        min="0"
-                        step="1"
-                        inputmode="numeric"
-                        data-price-cents="<?= $effectivePriceCents ?>"
-                    >
-                </td>
+                <div class="product-card__order">
+                    <div>
+                        <span class="product-card__quantity-label">
+                            Packungen
+                        </span>
 
-                <td data-line-total>
-                    CHF 0.00
-                </td>
-            </tr>
+                        <div class="quantity-stepper">
+                            <button
+                                class="quantity-stepper__button button--secondary"
+                                type="button"
+                                data-quantity-decrease
+                                aria-label="Eine Packung weniger"
+                            >
+                                −
+                            </button>
 
+                            <input
+                                class="quantity-stepper__input"
+                                type="number"
+                                name="quantities[<?= $productId ?>]"
+                                value="<?= $escape($quantity) ?>"
+                                min="0"
+                                step="1"
+                                inputmode="numeric"
+                                autocomplete="off"
+                                data-price-cents="<?= $effectivePriceCents ?>"
+                                aria-label="Packungen <?= $escape(
+                                    $product['name']
+                                ) ?>"
+                            >
+
+                            <button
+                                class="quantity-stepper__button"
+                                type="button"
+                                data-quantity-increase
+                                aria-label="Eine Packung mehr"
+                            >
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <span class="product-card__line-label">
+                            Positionswert
+                        </span>
+
+                        <span
+                            class="product-line-total"
+                            data-line-total
+                        >
+                            CHF 0.00
+                        </span>
+                    </div>
+                </div>
+            </article>
         <?php endforeach; ?>
 
-        </tbody>
-    </table>
-
-    <h3>Budgetkontrolle</h3>
-
-    <p>
-        Warenwert:
-        <strong id="order-total">
-            CHF 0.00
-        </strong>
-    </p>
-
-    <p>
-        Verbleibendes Tagesbudget:
-        <strong id="remaining-budget">
-            <?= $escape(
-                $formatMoneyCents(
-                    (int) $budgetDay['budget_cents']
-                )
-            ) ?>
-        </strong>
-    </p>
-
-    <p id="budget-warning" hidden>
-        <strong>
-            Achtung: Das Tagesbudget wird überschritten.
-        </strong>
-    </p>
-
-    <div class="actions">
-        <button
-            type="submit"
-            name="action"
-            value="save"
-        >
-            Änderungen speichern
-        </button>
-
-        <?php if (!$isSubmitted): ?>
-            <button
-                type="submit"
-                name="action"
-                value="submit"
+            <div
+                class="order-empty-filter"
+                id="no-products-row"
+                hidden
             >
-                Speichern und definitiv bestätigen
-            </button>
-        <?php endif; ?>
-    </div>
-</form>
+                Keine Produkte entsprechen dem aktuellen Filter.
+            </div>
+        </div>
 
-<script>
-    (() => {
-        const budgetCents =
-            <?= (int) $budgetDay['budget_cents'] ?>;
+        <div class="order-sticky">
+            <div class="order-sticky__inner">
+                <div class="order-budget">
+                    <div class="order-budget__metric">
+                        <span class="order-budget__label">
+                            Tagesbudget
+                        </span>
 
-        const orphanTotalCents =
-            <?= $orphanTotalCents ?>;
+                        <span class="order-budget__value">
+                            <?= $escape(
+                                $formatMoneyCents(
+                                    (int) $budgetDay['budget_cents']
+                                )
+                            ) ?>
+                        </span>
+                    </div>
 
-        const searchInput =
-            document.getElementById(
-                'product-search'
+                    <div class="order-budget__metric">
+                        <span class="order-budget__label">
+                            Warenwert
+                        </span>
+
+                        <span
+                            class="order-budget__value"
+                            id="order-total"
+                        >
+                            CHF 0.00
+                        </span>
+                    </div>
+
+                    <div
+                        class="order-budget__metric"
+                        id="remaining-budget-metric"
+                    >
+                        <span class="order-budget__label">
+                            Verbleibend
+                        </span>
+
+                        <span
+                            class="order-budget__value"
+                            id="remaining-budget"
+                        >
+                            <?= $escape(
+                                $formatMoneyCents(
+                                    (int) $budgetDay['budget_cents']
+                                )
+                            ) ?>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="order-sticky__actions">
+                    <button
+                        class="button--secondary"
+                        type="submit"
+                        name="action"
+                        value="save"
+                    >
+                        Änderungen speichern
+                    </button>
+
+                    <?php if (!$isSubmitted): ?>
+                        <button
+                            type="submit"
+                            name="action"
+                            value="submit"
+                        >
+                            Speichern & bestätigen
+                        </button>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div
+                class="alert alert--warning"
+                id="budget-warning"
+                hidden
+            >
+                <strong>Achtung:</strong>
+                Das Tagesbudget wird überschritten.
+            </div>
+        </div>
+    </form>
+
+    <script>
+        (() => {
+            const budgetCents =
+                <?= (int) $budgetDay['budget_cents'] ?>;
+
+            const orphanTotalCents =
+                <?= $orphanTotalCents ?>;
+
+            const searchInput =
+                document.getElementById('product-search');
+
+            const selectedOnly =
+                document.getElementById('selected-only');
+
+            const resetFiltersButton =
+                document.getElementById('reset-filters');
+
+            const visibleCountElement =
+                document.getElementById(
+                    'visible-product-count'
+                );
+
+            const selectedCountElement =
+                document.getElementById(
+                    'selected-product-count'
+                );
+
+            const noProductsRow =
+                document.getElementById('no-products-row');
+
+            const totalElement =
+                document.getElementById('order-total');
+
+            const remainingElement =
+                document.getElementById(
+                    'remaining-budget'
+                );
+
+            const remainingMetric =
+                document.getElementById(
+                    'remaining-budget-metric'
+                );
+
+            const warningElement =
+                document.getElementById(
+                    'budget-warning'
+                );
+
+            const rows = Array.from(
+                document.querySelectorAll(
+                    '[data-product-row]'
+                )
             );
 
-        const rows = Array.from(
-            document.querySelectorAll(
-                '[data-product-row]'
-            )
-        );
+            const inputs = rows
+                .map((row) => row.querySelector(
+                    'input[data-price-cents]'
+                ))
+                .filter(Boolean);
 
-        const inputs = rows.map(
-            (row) => row.querySelector(
-                'input[data-price-cents]'
-            )
-        );
-
-        const totalElement =
-            document.getElementById(
-                'order-total'
-            );
-
-        const remainingElement =
-            document.getElementById(
-                'remaining-budget'
-            );
-
-        const warningElement =
-            document.getElementById(
-                'budget-warning'
-            );
-
-        const formatter =
-            new Intl.NumberFormat(
+            const formatter = new Intl.NumberFormat(
                 'de-CH',
                 {
                     style: 'currency',
@@ -631,107 +760,243 @@ $isSubmitted =
                 }
             );
 
-        const getQuantity = (input) => {
-            const quantity =
-                Number(input.value);
+            const normalizeText = (value) => {
+                return String(value || '')
+                    .trim()
+                    .toLocaleLowerCase('de-CH');
+            };
 
-            if (
-                !Number.isInteger(quantity)
-                || quantity <= 0
-            ) {
-                return 0;
-            }
+            const getQuantity = (input) => {
+                const quantity = Number(input.value);
 
-            return quantity;
-        };
+                if (
+                    !Number.isInteger(quantity)
+                    || quantity <= 0
+                ) {
+                    return 0;
+                }
 
-        const lineTotal = (input) => {
-            return Number(
-                input.dataset.priceCents
-            ) * getQuantity(input);
-        };
+                return quantity;
+            };
 
-        const update = () => {
-            let totalCents =
-                orphanTotalCents;
+            const getLineTotalCents = (input) => {
+                return Number(input.dataset.priceCents)
+                    * getQuantity(input);
+            };
 
-            inputs.forEach((input) => {
-                const value =
-                    lineTotal(input);
+            const updateLineTotal = (input) => {
+                const row = input.closest(
+                    '[data-product-row]'
+                );
 
-                totalCents += value;
+                const lineElement = row.querySelector(
+                    '[data-line-total]'
+                );
 
-                const row =
-                    input.closest(
-                        '[data-product-row]'
-                    );
-
-                const lineElement =
-                    row.querySelector(
-                        '[data-line-total]'
-                    );
+                const quantity = getQuantity(input);
 
                 lineElement.textContent =
                     formatter.format(
-                        value / 100
+                        getLineTotalCents(input) / 100
                     );
-            });
 
-            const remainingCents =
-                budgetCents - totalCents;
+                row.classList.toggle(
+                    'product-card--selected',
+                    quantity > 0
+                );
+            };
 
-            totalElement.textContent =
-                formatter.format(
-                    totalCents / 100
+            const updateBudget = () => {
+                let totalCents = orphanTotalCents;
+
+                inputs.forEach((input) => {
+                    totalCents +=
+                        getLineTotalCents(input);
+                });
+
+                const remainingCents =
+                    budgetCents - totalCents;
+
+                totalElement.textContent =
+                    formatter.format(totalCents / 100);
+
+                remainingElement.textContent =
+                    formatter.format(
+                        remainingCents / 100
+                    );
+
+                const isNegative =
+                    remainingCents < 0;
+
+                remainingMetric.classList.toggle(
+                    'is-negative',
+                    isNegative
                 );
 
-            remainingElement.textContent =
-                formatter.format(
-                    remainingCents / 100
-                );
+                warningElement.hidden = !isNegative;
+            };
 
-            warningElement.hidden =
-                remainingCents >= 0;
-        };
+            const updateSelectedCount = () => {
+                const selectedCount = inputs.filter(
+                    (input) => getQuantity(input) > 0
+                ).length;
 
-        inputs.forEach((input) => {
-            input.addEventListener(
-                'input',
-                update
-            );
-        });
+                selectedCountElement.textContent =
+                    String(selectedCount);
+            };
 
-        searchInput.addEventListener(
-            'input',
-            () => {
-                const term =
+            const updateFilters = () => {
+                const searchTerm = normalizeText(
                     searchInput.value
-                        .trim()
-                        .toLocaleLowerCase(
-                            'de-CH'
-                        );
+                );
+
+                let visibleCount = 0;
 
                 rows.forEach((row) => {
-                    const searchText =
-                        String(
-                            row.dataset.search
-                            || ''
-                        ).toLocaleLowerCase(
-                            'de-CH'
-                        );
+                    const input = row.querySelector(
+                        'input[data-price-cents]'
+                    );
 
-                    row.hidden =
-                        term !== ''
-                        && !searchText.includes(
-                            term
-                        );
+                    const searchText = normalizeText(
+                        row.dataset.search
+                    );
+
+                    const matchesSearch =
+                        searchTerm === ''
+                        || searchText.includes(searchTerm);
+
+                    const matchesSelection =
+                        !selectedOnly.checked
+                        || getQuantity(input) > 0;
+
+                    const visible =
+                        matchesSearch
+                        && matchesSelection;
+
+                    row.hidden = !visible;
+
+                    if (visible) {
+                        visibleCount += 1;
+                    }
                 });
-            }
-        );
 
-        update();
-    })();
-</script>
+                visibleCountElement.textContent =
+                    String(visibleCount);
+
+                noProductsRow.hidden =
+                    visibleCount !== 0;
+            };
+
+            const updateEverything = (input = null) => {
+                if (input !== null) {
+                    updateLineTotal(input);
+                }
+
+                updateBudget();
+                updateSelectedCount();
+
+                if (selectedOnly.checked) {
+                    updateFilters();
+                }
+            };
+
+            const setQuantity = (input, quantity) => {
+                const normalized = Math.max(
+                    0,
+                    Number.isInteger(quantity)
+                        ? quantity
+                        : 0
+                );
+
+                input.value =
+                    normalized === 0
+                        ? ''
+                        : String(normalized);
+
+                updateEverything(input);
+            };
+
+            rows.forEach((row) => {
+                const input = row.querySelector(
+                    'input[data-price-cents]'
+                );
+
+                const decreaseButton = row.querySelector(
+                    '[data-quantity-decrease]'
+                );
+
+                const increaseButton = row.querySelector(
+                    '[data-quantity-increase]'
+                );
+
+                updateLineTotal(input);
+
+                input.addEventListener(
+                    'input',
+                    () => updateEverything(input)
+                );
+
+                input.addEventListener(
+                    'change',
+                    () => {
+                        if (selectedOnly.checked) {
+                            updateFilters();
+                        }
+                    }
+                );
+
+                decreaseButton.addEventListener(
+                    'click',
+                    () => {
+                        setQuantity(
+                            input,
+                            Math.max(
+                                0,
+                                getQuantity(input) - 1
+                            )
+                        );
+                    }
+                );
+
+                increaseButton.addEventListener(
+                    'click',
+                    () => {
+                        setQuantity(
+                            input,
+                            getQuantity(input) + 1
+                        );
+                    }
+                );
+            });
+
+            searchInput.addEventListener(
+                'input',
+                updateFilters
+            );
+
+            selectedOnly.addEventListener(
+                'change',
+                updateFilters
+            );
+
+            resetFiltersButton.addEventListener(
+                'click',
+                () => {
+                    searchInput.value = '';
+                    selectedOnly.checked = false;
+
+                    updateFilters();
+                    searchInput.focus();
+                }
+            );
+
+            updateBudget();
+            updateSelectedCount();
+            updateFilters();
+        })();
+    </script>
+
+</main>
 
 </body>
 </html>
