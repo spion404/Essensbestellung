@@ -8,6 +8,7 @@ use App\Repository\OrderRepository;
 use App\Repository\SettingsRepository;
 use App\Service\DailyBudgetService;
 use App\Service\GroupSessionService;
+use App\Service\OrderCutoffService;
 
 require dirname(__DIR__, 2) . '/config/bootstrap.php';
 
@@ -39,7 +40,11 @@ if ($group === null) {
 
 $settings = $settingsRepository->get();
 
-$dailyBudgetService = new DailyBudgetService();
+$dailyBudgetService =
+    new DailyBudgetService();
+
+$orderCutoffService =
+    new OrderCutoffService();
 
 $calculation = $dailyBudgetService->calculate(
     $settings,
@@ -58,11 +63,20 @@ foreach ($calculation['days'] as $day) {
         continue;
     }
 
+    $deliveryDate =
+        (string) $day['date'];
+
     $days[] = [
         'budget_day' => $day,
+
         'order' => $orderRepository->findByGroupAndDate(
             $groupId,
-            (string) $day['date']
+            $deliveryDate
+        ),
+
+        'cutoff' => $orderCutoffService->getStatus(
+            $deliveryDate,
+            (string) $settings['order_cutoff_time']
         ),
     ];
 }

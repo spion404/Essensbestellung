@@ -46,6 +46,14 @@ $formatDate = static function (string $date): string {
         . $parsedDate->format('d.m.Y');
 };
 
+$formatDateTime = static function (
+    DateTimeImmutable $dateTime
+): string {
+    return $dateTime->format(
+        'd.m.Y H:i'
+    ) . ' Uhr';
+};
+
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -99,6 +107,20 @@ $formatDate = static function (string $date): string {
     </strong>
 </p>
 
+<p>
+    Bestellschluss ist jeweils am Vortag um
+    <strong>
+        <?= $escape(
+            substr(
+                (string) $settings['order_cutoff_time'],
+                0,
+                5
+            )
+        ) ?>
+        Uhr
+    </strong>.
+</p>
+
 <?php if ($days === []): ?>
 
     <p>
@@ -114,6 +136,7 @@ $formatDate = static function (string $date): string {
                 <th>Datum</th>
                 <th>Abschnitt</th>
                 <th>Tagesbudget</th>
+                <th>Bestellschluss</th>
                 <th>Status</th>
                 <th>Aktion</th>
             </tr>
@@ -125,30 +148,56 @@ $formatDate = static function (string $date): string {
             <?php
             $day = $entry['budget_day'];
             $order = $entry['order'];
+            $cutoff = $entry['cutoff'];
 
-            $status = 'Noch keine Bestellung';
+            $isOpen =
+                (bool) $cutoff['is_open'];
 
-            if ($order !== null) {
-                $status =
-                    $order['status'] === 'submitted'
-                        ? 'Bestätigt'
-                        : 'Entwurf';
-            }
+            $target = null;
+            $linkLabel = null;
 
-            $target =
+            if (
                 $order !== null
                 && $order['status'] === 'submitted'
-                    ? '/group/review.php?date='
-                    : '/group/order.php?date=';
+            ) {
+                $status = 'Bestätigt';
 
-            $linkLabel =
-                $order === null
-                    ? 'Bestellung erfassen'
-                    : (
-                        $order['status'] === 'submitted'
-                            ? 'Bestellung anzeigen'
-                            : 'Entwurf fortsetzen'
-                    );
+                $target =
+                    '/group/review.php?date=';
+
+                $linkLabel =
+                    'Bestellung anzeigen';
+            } elseif (!$isOpen) {
+                if ($order !== null) {
+                    $status =
+                        'Entwurf – Bestellschluss vorbei';
+
+                    $target =
+                        '/group/review.php?date=';
+
+                    $linkLabel =
+                        'Entwurf anzeigen';
+                } else {
+                    $status =
+                        'Nicht bestellt – Bestellschluss vorbei';
+                }
+            } elseif ($order !== null) {
+                $status = 'Entwurf';
+
+                $target =
+                    '/group/order.php?date=';
+
+                $linkLabel =
+                    'Entwurf fortsetzen';
+            } else {
+                $status = 'Offen';
+
+                $target =
+                    '/group/order.php?date=';
+
+                $linkLabel =
+                    'Bestellung erfassen';
+            }
             ?>
 
             <tr>
@@ -178,20 +227,35 @@ $formatDate = static function (string $date): string {
                 </td>
 
                 <td>
+                    <?= $escape(
+                        $formatDateTime(
+                            $cutoff['deadline']
+                        )
+                    ) ?>
+                </td>
+
+                <td>
                     <?= $escape($status) ?>
                 </td>
 
                 <td>
-                    <a
-                        href="<?= $escape(
-                            $target
-                            . rawurlencode(
-                                (string) $day['date']
-                            )
-                        ) ?>"
-                    >
-                        <?= $escape($linkLabel) ?>
-                    </a>
+                    <?php if (
+                        $target !== null
+                        && $linkLabel !== null
+                    ): ?>
+                        <a
+                            href="<?= $escape(
+                                $target
+                                . rawurlencode(
+                                    (string) $day['date']
+                                )
+                            ) ?>"
+                        >
+                            <?= $escape($linkLabel) ?>
+                        </a>
+                    <?php else: ?>
+                        Geschlossen
+                    <?php endif; ?>
                 </td>
             </tr>
         <?php endforeach; ?>

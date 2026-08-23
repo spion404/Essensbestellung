@@ -55,12 +55,25 @@ $formatDate = static function (string $date): string {
         . $parsedDate->format('d.m.Y');
 };
 
-$formatQuantity = static function (mixed $quantity): string {
+$formatDateTime = static function (
+    DateTimeImmutable $dateTime
+): string {
+    return $dateTime->format(
+        'd.m.Y H:i'
+    ) . ' Uhr';
+};
+
+$formatQuantity = static function (
+    mixed $quantity
+): string {
     return (string) (int) $quantity;
 };
 
 $isSubmitted =
     $summary['order']['status'] === 'submitted';
+
+$isOrderingOpen =
+    (bool) $cutoffStatus['is_open'];
 
 $remainingBudgetCents =
     (int) $summary['remaining_budget_cents'];
@@ -104,6 +117,17 @@ $remainingBudgetCents =
     </strong>
 </p>
 
+<p>
+    Bestellschluss:
+    <strong>
+        <?= $escape(
+            $formatDateTime(
+                $cutoffStatus['deadline']
+            )
+        ) ?>
+    </strong>
+</p>
+
 <?php if ($submitted): ?>
     <p>
         <strong>
@@ -127,6 +151,19 @@ $remainingBudgetCents =
     </strong>
 </p>
 
+<?php if (
+    !$isSubmitted
+    && !$isOrderingOpen
+): ?>
+    <p>
+        <strong>
+            Der Bestellschluss ist vorbei.
+            Dieser Entwurf kann nicht mehr bearbeitet
+            oder definitiv bestätigt werden.
+        </strong>
+    </p>
+<?php endif; ?>
+
 <?php if ($summary['items'] === []): ?>
 
     <p>
@@ -140,7 +177,7 @@ $remainingBudgetCents =
             <tr>
                 <th>Produkt</th>
                 <th>Einheit</th>
-                <th>Menge</th>
+                <th>Packungen</th>
                 <th>Preis</th>
                 <th>Total</th>
             </tr>
@@ -158,6 +195,7 @@ $remainingBudgetCents =
                         && $item['article_number'] !== ''
                     ): ?>
                         <br>
+
                         <small>
                             Art.-Nr.
                             <?= $escape(
@@ -181,7 +219,7 @@ $remainingBudgetCents =
                 <td>
                     <?= $escape(
                         $formatQuantity(
-                            (string) $item['quantity']
+                            $item['quantity']
                         )
                     ) ?>
                 </td>
@@ -213,6 +251,7 @@ $remainingBudgetCents =
 
 <dl>
     <dt>Tagesbudget</dt>
+
     <dd>
         <?= $escape(
             $formatMoneyCents(
@@ -222,6 +261,7 @@ $remainingBudgetCents =
     </dd>
 
     <dt>Warenwert</dt>
+
     <dd>
         <?= $escape(
             $formatMoneyCents(
@@ -231,6 +271,7 @@ $remainingBudgetCents =
     </dd>
 
     <dt>Verbleibend</dt>
+
     <dd>
         <?= $escape(
             $formatMoneyCents(
@@ -241,6 +282,7 @@ $remainingBudgetCents =
 </dl>
 
 <?php if ($remainingBudgetCents < 0): ?>
+
     <p>
         <strong>
             Achtung: Das Tagesbudget wird um
@@ -252,9 +294,13 @@ $remainingBudgetCents =
             überschritten.
         </strong>
     </p>
+
 <?php endif; ?>
 
-<?php if (!$isSubmitted): ?>
+<?php if (
+    !$isSubmitted
+    && $isOrderingOpen
+): ?>
 
     <p>
         <a
@@ -267,6 +313,7 @@ $remainingBudgetCents =
     </p>
 
     <?php if ($summary['items'] !== []): ?>
+
         <form
             method="post"
             action="/group/review.php?date=<?= $escape(
@@ -295,16 +342,25 @@ $remainingBudgetCents =
         </form>
 
         <p>
-            Nach der Bestätigung kann die Gruppe diese Bestellung
-            nicht mehr verändern.
+            Nach der Bestätigung kann die Gruppe diese
+            Bestellung nicht mehr verändern.
         </p>
+
     <?php endif; ?>
+
+<?php elseif ($isSubmitted): ?>
+
+    <p>
+        Diese Bestellung ist abgeschlossen und kann von
+        der Gruppe nicht mehr bearbeitet werden.
+    </p>
 
 <?php else: ?>
 
     <p>
-        Diese Bestellung ist abgeschlossen und kann von der Gruppe
-        nicht mehr bearbeitet werden.
+        Der vorhandene Entwurf bleibt zur Kontrolle sichtbar,
+        kann nach dem Bestellschluss aber nicht mehr geändert
+        oder bestätigt werden.
     </p>
 
 <?php endif; ?>

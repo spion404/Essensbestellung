@@ -19,7 +19,8 @@ final class OrderService
         private readonly SettingsRepository $settingsRepository,
         private readonly ProductRepository $productRepository,
         private readonly OrderRepository $orderRepository,
-        private readonly DailyBudgetService $dailyBudgetService
+        private readonly DailyBudgetService $dailyBudgetService,
+        private readonly OrderCutoffService $orderCutoffService
     ) {
     }
 
@@ -28,6 +29,10 @@ final class OrderService
         string $deliveryDate,
         array $rawQuantities
     ): array {
+        $this->assertOrderingOpen(
+            $deliveryDate
+        );
+
         $day = $this->findBudgetDay(
             $groupId,
             $deliveryDate
@@ -97,6 +102,10 @@ final class OrderService
         int $groupId,
         string $deliveryDate
     ): array {
+        $this->assertOrderingOpen(
+            $deliveryDate
+        );
+
         $this->findBudgetDay(
             $groupId,
             $deliveryDate
@@ -166,6 +175,18 @@ final class OrderService
             'total_cents' => $totalCents,
             'remaining_budget_cents' => $budgetCents - $totalCents,
         ];
+    }
+
+    private function assertOrderingOpen(
+        string $deliveryDate
+    ): void {
+        $settings =
+            $this->settingsRepository->get();
+
+        $this->orderCutoffService->assertOpen(
+            $deliveryDate,
+            (string) $settings['order_cutoff_time']
+        );
     }
 
     private function findBudgetDay(

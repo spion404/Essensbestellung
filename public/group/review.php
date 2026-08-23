@@ -9,6 +9,7 @@ use App\Repository\ProductRepository;
 use App\Repository\SettingsRepository;
 use App\Service\DailyBudgetService;
 use App\Service\GroupSessionService;
+use App\Service\OrderCutoffService;
 use App\Service\OrderService;
 
 require dirname(__DIR__, 2) . '/config/bootstrap.php';
@@ -24,19 +25,31 @@ if ($groupId === null) {
 
 $pdo = Database::connect();
 
-$groupRepository = new GroupRepository($pdo);
-$settingsRepository = new SettingsRepository($pdo);
-$productRepository = new ProductRepository($pdo);
-$orderRepository = new OrderRepository($pdo);
+$groupRepository =
+    new GroupRepository($pdo);
 
-$dailyBudgetService = new DailyBudgetService();
+$settingsRepository =
+    new SettingsRepository($pdo);
+
+$productRepository =
+    new ProductRepository($pdo);
+
+$orderRepository =
+    new OrderRepository($pdo);
+
+$dailyBudgetService =
+    new DailyBudgetService();
+
+$orderCutoffService =
+    new OrderCutoffService();
 
 $orderService = new OrderService(
     $groupRepository,
     $settingsRepository,
     $productRepository,
     $orderRepository,
-    $dailyBudgetService
+    $dailyBudgetService,
+    $orderCutoffService
 );
 
 $group = $groupRepository->findById(
@@ -75,6 +88,12 @@ try {
     );
     exit;
 }
+
+$cutoffStatus =
+    $orderCutoffService->getStatus(
+        $deliveryDate,
+        (string) $settings['order_cutoff_time']
+    );
 
 $error = null;
 
@@ -121,6 +140,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $groupId,
                 $deliveryDate
             );
+
+            $cutoffStatus =
+                $orderCutoffService->getStatus(
+                    $deliveryDate,
+                    (string) $settings['order_cutoff_time']
+                );
         }
     }
 }

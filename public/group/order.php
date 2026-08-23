@@ -10,6 +10,7 @@ use App\Repository\ProductRepository;
 use App\Repository\SettingsRepository;
 use App\Service\DailyBudgetService;
 use App\Service\GroupSessionService;
+use App\Service\OrderCutoffService;
 use App\Service\OrderService;
 
 require dirname(__DIR__, 2) . '/config/bootstrap.php';
@@ -31,14 +32,19 @@ $productRepository = new ProductRepository($pdo);
 $categoryRepository = new CategoryRepository($pdo);
 $orderRepository = new OrderRepository($pdo);
 
-$dailyBudgetService = new DailyBudgetService();
+$dailyBudgetService =
+    new DailyBudgetService();
+
+$orderCutoffService =
+    new OrderCutoffService();
 
 $orderService = new OrderService(
     $groupRepository,
     $settingsRepository,
     $productRepository,
     $orderRepository,
-    $dailyBudgetService
+    $dailyBudgetService,
+    $orderCutoffService
 );
 
 $group = $groupRepository->findById(
@@ -91,7 +97,10 @@ $participantCount =
 
 if ($participantCount === 0) {
     http_response_code(404);
-    exit('Für diesen Tag ist keine Bestellung vorgesehen.');
+
+    exit(
+        'Für diesen Tag ist keine Bestellung vorgesehen.'
+    );
 }
 
 $existingOrder =
@@ -108,6 +117,25 @@ if (
         'Location: /group/review.php?date='
         . rawurlencode($deliveryDate)
     );
+    exit;
+}
+
+$cutoffStatus =
+    $orderCutoffService->getStatus(
+        $deliveryDate,
+        (string) $settings['order_cutoff_time']
+    );
+
+if (!$cutoffStatus['is_open']) {
+    if ($existingOrder !== null) {
+        header(
+            'Location: /group/review.php?date='
+            . rawurlencode($deliveryDate)
+        );
+        exit;
+    }
+
+    header('Location: /group/');
     exit;
 }
 
@@ -216,7 +244,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $products = $productRepository->findAll();
-$categories = $categoryRepository->findAll();
+
+$categories =
+    $categoryRepository->findAll();
+
 $productCategoryIds =
     $categoryRepository->findProductCategoryIds();
 
