@@ -1,1 +1,2 @@
-004_make_order_quantities_integer.sql
+ALTER TABLE order_items
+    MODIFY quantity INT UNSIGNED NOT NULL;
