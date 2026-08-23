@@ -201,6 +201,42 @@ foreach ($categories as $category) {
         </div>
     </div>
 
+    <div class="stat">
+
+        <span class="stat__label">
+            Übertrag / Rundung bisher
+        </span>
+
+        <span class="stat__value">
+            <?= $escape(
+                $formatMoney(
+                    (int) $budgetBalance[
+                        'carryover_cents'
+                    ]
+                )
+            ) ?>
+        </span>
+
+    </div>
+
+    <div class="stat">
+
+        <span class="stat__label">
+            Gesamtbudget Lager
+        </span>
+
+        <span class="stat__value">
+            <?= $escape(
+                $formatMoney(
+                    (int) $budgetBalance[
+                        'total_budget_cents'
+                    ]
+                )
+            ) ?>
+        </span>
+
+    </div>
+
     <?php if ($saved): ?>
         <div class="alert alert--success">
             <strong>Entwurf gespeichert.</strong>

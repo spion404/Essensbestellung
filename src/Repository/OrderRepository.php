@@ -244,6 +244,7 @@ final class OrderRepository
                 group_id,
                 delivery_date,
                 status,
+                rounding_amount,
                 submitted_at,
                 created_at,
                 updated_at
@@ -268,6 +269,49 @@ final class OrderRepository
         }
 
         return $order;
+    }
+
+    public function findSubmittedFinancialsByGroup(
+        int $groupId
+    ): array {
+        $statement = $this->pdo->prepare(
+            'SELECT
+                o.id,
+                o.delivery_date,
+                o.rounding_amount,
+
+                COALESCE(
+                    ROUND(
+                        SUM(
+                            oi.unit_price * oi.quantity
+                        ),
+                        2
+                    ),
+                    0.00
+                ) AS total_amount
+
+            FROM orders o
+
+            LEFT JOIN order_items oi
+                ON oi.order_id = o.id
+
+            WHERE o.group_id = :group_id
+            AND o.status = \'submitted\'
+
+            GROUP BY
+                o.id,
+                o.delivery_date,
+                o.rounding_amount
+
+            ORDER BY
+                o.delivery_date ASC'
+        );
+
+        $statement->execute([
+            'group_id' => $groupId,
+        ]);
+
+        return $statement->fetchAll();
     }
 
     public function findItems(int $orderId): array
@@ -374,7 +418,8 @@ final class OrderRepository
     public function saveAsAdmin(
         int $groupId,
         string $deliveryDate,
-        array $items
+        array $items,
+        string $roundingAmount
     ): int {
         $ownsTransaction =
             !$this->pdo->inTransaction();
@@ -415,6 +460,11 @@ final class OrderRepository
             $this->insertItems(
                 $orderId,
                 $items
+            );
+
+            $this->updateRoundingAmount(
+                $orderId,
+                $roundingAmount
             );
 
             $this->touchOrder(
@@ -614,6 +664,23 @@ final class OrderRepository
                 'quantity' => $item['quantity'],
             ]);
         }
+    }
+
+    private function updateRoundingAmount(
+        int $orderId,
+        string $roundingAmount
+    ): void {
+        $statement =
+            $this->pdo->prepare(
+                'UPDATE orders
+                SET rounding_amount = :rounding_amount
+                WHERE id = :id'
+            );
+
+        $statement->execute([
+            'rounding_amount' => $roundingAmount,
+            'id' => $orderId,
+        ]);
     }
 
     private function touchOrder(

@@ -162,6 +162,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_POST['quantities']
         ?? [];
 
+    $rawRoundingAmount =
+        $_POST['rounding_amount']
+        ?? '0';
+
     if (
         !$adminSession->verifyCsrfToken(
             $csrfToken
@@ -186,6 +190,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ) {
         $error =
             'Ungültige Mengenangaben.';
+    } elseif (
+        !is_scalar($rawRoundingAmount)
+    ) {
+        $error =
+            'Ungültige Rundungsangabe.';
     } else {
         $quantities = [];
         $hasInvalidValue = false;
@@ -209,11 +218,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'Ungültige Mengenangaben.';
         } else {
             try {
+                $roundingAmount =
+                    (string) $rawRoundingAmount;
+
                 $orderService->saveAsAdmin(
                     $groupId,
                     $deliveryDate,
                     $quantities,
-                    $action === 'submit'
+                    $action === 'submit',
+                    $roundingAmount
                 );
 
                 $query =
@@ -266,6 +279,14 @@ if ($existingOrder !== null) {
             (int) $item['product_id']
         ] = $item;
     }
+}
+
+if (!isset($roundingAmount)) {
+    $roundingAmount =
+        (string) (
+            $existingOrder['rounding_amount']
+            ?? '0.00'
+        );
 }
 
 if (!isset($quantities)) {

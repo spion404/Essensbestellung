@@ -194,6 +194,42 @@ $statusClass = $isSubmitted
         </div>
 
         <div class="stat">
+
+            <span class="stat__label">
+                Übertrag / Rundung bisher
+            </span>
+
+            <span class="stat__value">
+                <?= $escape(
+                    $formatMoneyCents(
+                        (int) $budgetBalance[
+                            'carryover_cents'
+                        ]
+                    )
+                ) ?>
+            </span>
+
+        </div>
+
+        <div class="stat">
+
+            <span class="stat__label">
+                Gesamtbudget Lager
+            </span>
+
+            <span class="stat__value">
+                <?= $escape(
+                    $formatMoneyCents(
+                        (int) $budgetBalance[
+                            'total_budget_cents'
+                        ]
+                    )
+                ) ?>
+            </span>
+
+        </div>
+
+        <div class="stat">
             <span class="stat__label">Warenwert</span>
             <span class="stat__value">
                 <?= $escape(
@@ -202,6 +238,42 @@ $statusClass = $isSubmitted
                     )
                 ) ?>
             </span>
+        </div>
+
+        <div class="stat">
+
+            <span class="stat__label">
+                Rundung / Kostenkorrektur
+            </span>
+
+            <span class="stat__value">
+                <?= $escape(
+                    $formatMoneyCents(
+                        (int) $summary[
+                            'rounding_cents'
+                        ]
+                    )
+                ) ?>
+            </span>
+
+        </div>
+
+        <div class="stat">
+
+            <span class="stat__label">
+                Effektive Kosten
+            </span>
+
+            <span class="stat__value">
+                <?= $escape(
+                    $formatMoneyCents(
+                        (int) $summary[
+                            'effective_total_cents'
+                        ]
+                    )
+                ) ?>
+            </span>
+
         </div>
 
         <div class="stat <?= $remainingBudgetCents < 0 ? 'stat--danger' : '' ?>">
@@ -249,7 +321,7 @@ $statusClass = $isSubmitted
                     abs($remainingBudgetCents)
                 )
             ) ?>
-            über dem verfügbaren Budget.
+            über dem berechneten Tagesbudget.
         </div>
     <?php endif; ?>
 

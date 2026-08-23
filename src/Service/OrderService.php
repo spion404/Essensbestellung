@@ -62,12 +62,18 @@ final class OrderService
         int $groupId,
         string $deliveryDate,
         array $rawQuantities,
-        bool $submit = false
+        bool $submit = false,
+        string $rawRoundingAmount = '0'
     ): array {
         $this->findBudgetDay(
             $groupId,
             $deliveryDate
         );
+
+        $roundingAmount =
+            $this->normalizeRoundingAmount(
+                $rawRoundingAmount
+            );
 
         $existingSnapshots =
             $this->findExistingSnapshots(
@@ -98,7 +104,8 @@ final class OrderService
             $this->orderRepository->saveAsAdmin(
                 $groupId,
                 $deliveryDate,
-                $prepared['items']
+                $prepared['items'],
+                $roundingAmount
             );
 
         if ($submit) {
@@ -177,12 +184,41 @@ final class OrderService
         $budgetCents =
             (int) $day['budget_cents'];
 
+        $roundingCents =
+            $this->signedMoneyToCents(
+                (string) (
+                    $order['rounding_amount']
+                    ?? '0.00'
+                )
+            );
+
+        $effectiveTotalCents =
+            $totalCents + $roundingCents;
+
         return [
             'order' => $order,
             'items' => $items,
             'budget_day' => $day,
-            'budget_cents' => $budgetCents,
-            'total_cents' => $totalCents,
+
+            'budget_cents' =>
+                $budgetCents,
+
+            'total_cents' =>
+                $totalCents,
+
+            'rounding_cents' =>
+                $roundingCents,
+
+            'effective_total_cents' =>
+                $effectiveTotalCents,
+
+            /*
+            * Absichtlich weiterhin nur Tagesbudget
+            * gegen den eigentlichen Bestellwert.
+            *
+            * Übertrag und Rundung verändern die
+            * Budgetwarnung der Gruppe nicht.
+            */
             'remaining_budget_cents' =>
                 $budgetCents - $totalCents,
         ];
@@ -527,6 +563,113 @@ final class OrderService
         return $this->moneyToCents(
             $unitPrice
         ) * $quantity;
+    }
+
+    private function normalizeRoundingAmount(
+        string $value
+    ): string {
+        $value = str_replace(
+            ',',
+            '.',
+            trim($value)
+        );
+
+        if ($value === '') {
+            return '0.00';
+        }
+
+        if (
+            preg_match(
+                '/^(?<sign>[+-]?)(?<whole>\d+)'
+                . '(?:\.(?<decimal>\d{1,2}))?$/',
+                $value,
+                $matches
+            ) !== 1
+        ) {
+            throw new InvalidArgumentException(
+                'Die Rundung muss ein gültiger Betrag '
+                . 'mit maximal zwei Dezimalstellen sein.'
+            );
+        }
+
+        $whole =
+            ltrim(
+                (string) $matches['whole'],
+                '0'
+            );
+
+        if ($whole === '') {
+            $whole = '0';
+        }
+
+        if (strlen($whole) > 8) {
+            throw new InvalidArgumentException(
+                'Der Rundungsbetrag ist zu gross.'
+            );
+        }
+
+        $decimal =
+            str_pad(
+                (string) (
+                    $matches['decimal']
+                    ?? ''
+                ),
+                2,
+                '0'
+            );
+
+        if (
+            $whole === '0'
+            && $decimal === '00'
+        ) {
+            return '0.00';
+        }
+
+        $sign =
+            ($matches['sign'] ?? '') === '-'
+                ? '-'
+                : '';
+
+        return $sign
+            . $whole
+            . '.'
+            . $decimal;
+    }
+
+    private function signedMoneyToCents(
+        string $amount
+    ): int {
+        $normalized =
+            $this->normalizeRoundingAmount(
+                $amount
+            );
+
+        $negative =
+            str_starts_with(
+                $normalized,
+                '-'
+            );
+
+        $unsigned =
+            ltrim(
+                $normalized,
+                '-'
+            );
+
+        [$wholePart, $decimalPart] =
+            explode(
+                '.',
+                $unsigned,
+                2
+            );
+
+        $cents =
+            ((int) $wholePart * 100)
+            + (int) $decimalPart;
+
+        return $negative
+            ? -$cents
+            : $cents;
     }
 
     private function moneyToCents(

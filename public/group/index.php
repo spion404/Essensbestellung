@@ -9,6 +9,7 @@ use App\Repository\SettingsRepository;
 use App\Service\DailyBudgetService;
 use App\Service\GroupSessionService;
 use App\Service\OrderCutoffService;
+use App\Service\BudgetBalanceService;
 
 require dirname(__DIR__, 2) . '/config/bootstrap.php';
 
@@ -43,6 +44,12 @@ $settings = $settingsRepository->get();
 $dailyBudgetService =
     new DailyBudgetService();
 
+$budgetBalanceService =
+    new BudgetBalanceService(
+        $orderRepository,
+        $dailyBudgetService
+    );
+
 $orderCutoffService =
     new OrderCutoffService();
 
@@ -66,8 +73,17 @@ foreach ($calculation['days'] as $day) {
     $deliveryDate =
         (string) $day['date'];
 
+    $budgetBalance =
+        $budgetBalanceService->forDeliveryDate(
+            $settings,
+            $group,
+            $deliveryDate
+        );
+
     $days[] = [
         'budget_day' => $day,
+        
+        'balance' => $budgetBalance,
 
         'order' => $orderRepository->findByGroupAndDate(
             $groupId,

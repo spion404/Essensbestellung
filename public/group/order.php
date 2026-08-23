@@ -12,6 +12,7 @@ use App\Service\DailyBudgetService;
 use App\Service\GroupSessionService;
 use App\Service\OrderCutoffService;
 use App\Service\OrderService;
+use App\Service\BudgetBalanceService;
 
 require dirname(__DIR__, 2) . '/config/bootstrap.php';
 
@@ -34,6 +35,12 @@ $orderRepository = new OrderRepository($pdo);
 
 $dailyBudgetService =
     new DailyBudgetService();
+
+$budgetBalanceService =
+    new BudgetBalanceService(
+        $orderRepository,
+        $dailyBudgetService
+    );
 
 $orderCutoffService =
     new OrderCutoffService();
@@ -102,6 +109,13 @@ if ($participantCount === 0) {
         'Für diesen Tag ist keine Bestellung vorgesehen.'
     );
 }
+
+$budgetBalance =
+    $budgetBalanceService->forDeliveryDate(
+        $settings,
+        $group,
+        $deliveryDate
+    );
 
 $existingOrder =
     $orderRepository->findByGroupAndDate(

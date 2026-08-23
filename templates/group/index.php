@@ -164,7 +164,7 @@ $formatDateTime = static function (
         <div class="stat">
 
             <span class="stat__label">
-                Lagerbudget
+                Gesamtbudget Lager
             </span>
 
             <span class="stat__value">
@@ -233,6 +233,7 @@ $formatDateTime = static function (
                             <th>Datum</th>
                             <th>Abschnitt</th>
                             <th>Tagesbudget</th>
+                            <th>Übertrag / Rundung bisher</th>
                             <th>Bestellschluss</th>
                             <th>Status</th>
                             <th>Aktion</th>
@@ -246,6 +247,7 @@ $formatDateTime = static function (
 
                         <?php
                         $day = $entry['budget_day'];
+                        $balance = $entry['balance'];
                         $order = $entry['order'];
                         $cutoff = $entry['cutoff'];
 
@@ -344,6 +346,14 @@ $formatDateTime = static function (
                                 <?= $escape(
                                     $formatMoney(
                                         (int) $day['budget_cents']
+                                    )
+                                ) ?>
+                            </td>
+
+                            <td class="numeric">
+                                <?= $escape(
+                                    $formatMoney(
+                                        (int) $balance['carryover_cents']
                                     )
                                 ) ?>
                             </td>

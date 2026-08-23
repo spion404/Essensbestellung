@@ -536,6 +536,64 @@ require dirname(__DIR__)
             </div>
         </div>
 
+        <section class="panel panel--soft">
+
+            <div class="panel__header">
+                <div>
+                    <h2>Abrechnung</h2>
+
+                    <span class="small-muted">
+                        Hier kann die Differenz zwischen berechnetem
+                        Produktwert und effektivem Rechnungsbetrag
+                        eingetragen werden.
+                    </span>
+                </div>
+            </div>
+
+            <div class="form-grid">
+
+                <div class="field">
+
+                    <label for="rounding-amount">
+                        Rundung / Kostenkorrektur
+                    </label>
+
+                    <input
+                        type="text"
+                        id="rounding-amount"
+                        name="rounding_amount"
+                        value="<?= $escape($roundingAmount) ?>"
+                        inputmode="decimal"
+                        placeholder="0.00"
+                    >
+
+                    <span class="small-muted">
+                        Positiv = effektive Kosten höher,
+                        negativ = effektive Kosten tiefer.
+                        Beispiel: +0.20 oder -0.15
+                    </span>
+
+                </div>
+
+                <div class="stat">
+
+                    <span class="stat__label">
+                        Effektive Kosten
+                    </span>
+
+                    <span
+                        class="stat__value"
+                        id="effective-total"
+                    >
+                        CHF 0.00
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
         <div class="order-sticky">
             <div class="order-sticky__inner">
                 <div class="order-budget">
@@ -667,6 +725,16 @@ require dirname(__DIR__)
                 document.getElementById(
                     'budget-warning'
                 );
+            
+            const roundingInput =
+                document.getElementById(
+                    'rounding-amount'
+                );
+
+            const effectiveTotalElement =
+                document.getElementById(
+                    'effective-total'
+                );    
 
             const rows = Array.from(
                 document.querySelectorAll(
@@ -749,6 +817,28 @@ require dirname(__DIR__)
 
                 totalElement.textContent =
                     formatter.format(totalCents / 100);
+                
+                const roundingValue =
+                    Number(
+                        String(
+                            roundingInput.value || '0'
+                        ).replace(',', '.')
+                    );
+
+                const roundingCents =
+                    Number.isFinite(roundingValue)
+                        ? Math.round(
+                            roundingValue * 100
+                        )
+                        : 0;
+
+                effectiveTotalElement.textContent =
+                    formatter.format(
+                        (
+                            totalCents
+                            + roundingCents
+                        ) / 100
+                    );
 
                 remainingElement.textContent =
                     formatter.format(
@@ -918,6 +1008,11 @@ require dirname(__DIR__)
                     updateFilters();
                     searchInput.focus();
                 }
+            );
+
+            roundingInput.addEventListener(
+                'input',
+                updateBudget
             );
 
             updateBudget();
