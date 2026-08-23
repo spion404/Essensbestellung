@@ -120,6 +120,33 @@ $statusLabels = [
         : 'vorbei' ?>
 </p>
 
+<h3>Export</h3>
+
+<p>
+    <a
+        href="/admin/orders/export.php?date=<?= $escape(
+            rawurlencode($deliveryDate)
+        ) ?>&amp;format=xlsx"
+    >
+        XLSX herunterladen
+    </a>
+    |
+    <a
+        href="/admin/orders/export.php?date=<?= $escape(
+            rawurlencode($deliveryDate)
+        ) ?>&amp;format=csv"
+    >
+        CSV-Sammelbestellung herunterladen
+    </a>
+</p>
+
+<p>
+    Das XLSX enthält die Sammelbestellung,
+    die Kommissionierung pro Gruppe und den Gruppenstatus.
+    In die eigentlichen Bestellmengen fliessen nur definitiv
+    bestätigte Bestellungen ein.
+</p>
+
 <h3>Status der Gruppen</h3>
 
 <ul>
