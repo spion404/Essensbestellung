@@ -17,6 +17,7 @@ Das Tool ist dafür gedacht, auf einem normalen Webhosting installiert und für 
 - Bestellschluss am Vortag zur konfigurierten Uhrzeit
 - Budgetwarnung bei Überschreitung des berechneten Tagesbudgets
 - Anzeige von Budgetüberträgen und Rundungen
+- PDF-Export definitiv bestätigter Bestellungen
 
 ### Administration
 
@@ -32,13 +33,14 @@ Das Tool ist dafür gedacht, auf einem normalen Webhosting installiert und für 
 - XLSX- und CSV-Export der Sammelbestellung
 - Kommissionierung pro Gruppe
 - druckbare Kommissionierliste
+- PDF-Export der Kommissionierliste
 
 ## Systemanforderungen
 
 Aktuell unterstützte Umgebung:
 
 - Apache oder Nginx
-- PHP >= 8.4
+- PHP >= 8.3
 - MySQL >= 8.4 oder MariaDB >= 10.11
 - Composer 2
 - UTF-8 / utf8mb4
@@ -68,7 +70,7 @@ Benötigte PHP-Erweiterungen:
 - zip
 - zlib
 
-PhpSpreadsheet 5.9 benötigt einen grossen Teil dieser Erweiterungen ebenfalls direkt. Vor einer Installation kann mit `php bin/check.php` geprüft werden, ob der Hoster alle Voraussetzungen erfüllt.
+PhpSpreadsheet 5.9 benötigt einen grossen Teil dieser Erweiterungen ebenfalls direkt. Dompdf verwendet insbesondere `dom` und `mbstring` für die PDF-Erzeugung. Vor einer Installation kann mit `php bin/check.php` geprüft werden, ob der Hoster alle Voraussetzungen erfüllt.
 
 ## Empfohlene Verzeichnisstruktur
 
@@ -122,6 +124,8 @@ Abhängigkeiten installieren:
 ```bash
 composer install --no-dev --optimize-autoloader
 ```
+
+Dompdf wird über Composer installiert und dient sowohl dem Gruppen-PDF als auch dem PDF der Kommissionierliste.
 
 Falls Composer wegen fehlender PHP-Erweiterungen abbricht, müssen diese zuerst im Hosting-Panel aktiviert oder durch den Hoster bereitgestellt werden.
 

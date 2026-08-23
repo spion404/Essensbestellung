@@ -68,6 +68,15 @@ $isOrderingOpen =
 $remainingBudgetCents =
     (int) $summary['remaining_budget_cents'];
 
+$roundingCents =
+    (int) ($summary['rounding_cents'] ?? 0);
+
+$effectiveTotalCents =
+    (int) (
+        $summary['effective_total_cents']
+        ?? $summary['total_cents']
+    );
+
 $statusLabel = $isSubmitted
     ? 'Bestätigt'
     : 'Entwurf';
@@ -149,16 +158,29 @@ $statusClass = $isSubmitted
             <h1><?= $escape($formatDate($deliveryDate)) ?></h1>
 
             <p class="lead">
-                Kontrolliere die Bestellung vor der definitiven Bestätigung.
+                Kontrolliere die Bestellung und die Budgetwerte.
             </p>
         </div>
 
-        <a
-            class="button button--secondary"
-            href="/group/"
-        >
-            Zurück zu den Liefertagen
-        </a>
+        <div class="toolbar">
+            <?php if ($isSubmitted): ?>
+                <a
+                    class="button"
+                    href="/group/order-pdf.php?date=<?= $escape(
+                        rawurlencode($deliveryDate)
+                    ) ?>"
+                >
+                    Bestellung als PDF
+                </a>
+            <?php endif; ?>
+
+            <a
+                class="button button--secondary"
+                href="/group/"
+            >
+                Zurück zu den Liefertagen
+            </a>
+        </div>
     </div>
 
     <div class="review-header-grid">
@@ -194,39 +216,27 @@ $statusClass = $isSubmitted
         </div>
 
         <div class="stat">
-
             <span class="stat__label">
                 Übertrag / Rundung bisher
             </span>
-
             <span class="stat__value">
                 <?= $escape(
                     $formatMoneyCents(
-                        (int) $budgetBalance[
-                            'carryover_cents'
-                        ]
+                        (int) $budgetBalance['carryover_cents']
                     )
                 ) ?>
             </span>
-
         </div>
 
         <div class="stat">
-
-            <span class="stat__label">
-                Gesamtbudget Lager
-            </span>
-
+            <span class="stat__label">Gesamtbudget Lager</span>
             <span class="stat__value">
                 <?= $escape(
                     $formatMoneyCents(
-                        (int) $budgetBalance[
-                            'total_budget_cents'
-                        ]
+                        (int) $budgetBalance['total_budget_cents']
                     )
                 ) ?>
             </span>
-
         </div>
 
         <div class="stat">
@@ -241,43 +251,25 @@ $statusClass = $isSubmitted
         </div>
 
         <div class="stat">
-
-            <span class="stat__label">
-                Rundung / Kostenkorrektur
-            </span>
-
+            <span class="stat__label">Rundung / Kostenkorrektur</span>
             <span class="stat__value">
                 <?= $escape(
-                    $formatMoneyCents(
-                        (int) $summary[
-                            'rounding_cents'
-                        ]
-                    )
+                    $formatMoneyCents($roundingCents)
                 ) ?>
             </span>
-
         </div>
 
         <div class="stat">
-
-            <span class="stat__label">
-                Effektive Kosten
-            </span>
-
+            <span class="stat__label">Effektive Kosten</span>
             <span class="stat__value">
                 <?= $escape(
-                    $formatMoneyCents(
-                        (int) $summary[
-                            'effective_total_cents'
-                        ]
-                    )
+                    $formatMoneyCents($effectiveTotalCents)
                 ) ?>
             </span>
-
         </div>
 
         <div class="stat <?= $remainingBudgetCents < 0 ? 'stat--danger' : '' ?>">
-            <span class="stat__label">Verbleibend</span>
+            <span class="stat__label">Verbleibend Tagesbudget</span>
             <span class="stat__value">
                 <?= $escape(
                     $formatMoneyCents(
@@ -291,7 +283,8 @@ $statusClass = $isSubmitted
     <?php if ($submitted): ?>
         <div class="alert alert--success">
             <strong>Bestellung bestätigt.</strong>
-            Die Bestellung wurde definitiv übermittelt.
+            Die Bestellung wurde definitiv übermittelt und kann nun
+            als PDF heruntergeladen werden.
         </div>
     <?php endif; ?>
 
@@ -458,6 +451,15 @@ $statusClass = $isSubmitted
 
             <?php elseif ($isSubmitted): ?>
 
+                <a
+                    class="button"
+                    href="/group/order-pdf.php?date=<?= $escape(
+                        rawurlencode($deliveryDate)
+                    ) ?>"
+                >
+                    PDF herunterladen
+                </a>
+
                 <span class="badge badge--success">
                     Bestellung abgeschlossen
                 </span>
@@ -485,7 +487,8 @@ $statusClass = $isSubmitted
         <?php elseif ($isSubmitted): ?>
             <p class="review-note">
                 Diese Bestellung ist abgeschlossen und für die Gruppe
-                schreibgeschützt.
+                schreibgeschützt. Der PDF-Download enthält immer den aktuell
+                gespeicherten Stand inklusive allfälliger Admin-Rundung.
             </p>
         <?php endif; ?>
     </section>

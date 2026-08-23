@@ -32,12 +32,12 @@ $info = static function (string $message): void {
 echo "Essensbestellung - Systemcheck\n";
 echo str_repeat('=', 40) . "\n\n";
 
-if (version_compare(PHP_VERSION, '8.4.0', '>=')) {
+if (version_compare(PHP_VERSION, '8.3.0', '>=')) {
     $ok('PHP ' . PHP_VERSION);
 } else {
     $fail(
         'PHP ' . PHP_VERSION
-        . ' gefunden; aktuell wird PHP >= 8.4 benötigt.'
+        . ' gefunden; aktuell wird PHP >= 8.3 benötigt.'
     );
 }
 
@@ -77,6 +77,14 @@ $autoload = $root . '/vendor/autoload.php';
 if (is_file($autoload)) {
     $ok('Composer-Abhängigkeiten installiert');
     require $autoload;
+
+    if (class_exists(Dompdf\Dompdf::class)) {
+        $ok('Dompdf ist installiert und autoloadbar.');
+    } else {
+        $fail(
+            "Dompdf fehlt; bitte 'composer install' bzw. nach der composer.json-Änderung 'composer update dompdf/dompdf --with-all-dependencies' ausführen."
+        );
+    }
 } else {
     $fail(
         "vendor/autoload.php fehlt; bitte 'composer install --no-dev --optimize-autoloader' ausführen."

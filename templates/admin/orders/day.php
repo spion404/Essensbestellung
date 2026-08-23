@@ -191,6 +191,15 @@ require dirname(__DIR__)
 
         <a
             class="button button--secondary"
+            href="/admin/orders/picking-pdf.php?date=<?= $escape(
+                rawurlencode($deliveryDate)
+            ) ?>"
+        >
+            Kommissionierliste als PDF
+        </a>
+
+        <a
+            class="button button--secondary"
             href="/admin/orders/export.php?date=<?= $escape(
                 rawurlencode($deliveryDate)
             ) ?>&amp;format=xlsx"

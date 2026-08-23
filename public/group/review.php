@@ -7,11 +7,11 @@ use App\Repository\GroupRepository;
 use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
 use App\Repository\SettingsRepository;
+use App\Service\BudgetBalanceService;
 use App\Service\DailyBudgetService;
 use App\Service\GroupSessionService;
 use App\Service\OrderCutoffService;
 use App\Service\OrderService;
-use App\Service\BudgetBalanceService;
 
 require dirname(__DIR__, 2) . '/config/bootstrap.php';
 
@@ -26,29 +26,17 @@ if ($groupId === null) {
 
 $pdo = Database::connect();
 
-$groupRepository =
-    new GroupRepository($pdo);
+$groupRepository = new GroupRepository($pdo);
+$settingsRepository = new SettingsRepository($pdo);
+$productRepository = new ProductRepository($pdo);
+$orderRepository = new OrderRepository($pdo);
 
-$settingsRepository =
-    new SettingsRepository($pdo);
-
-$productRepository =
-    new ProductRepository($pdo);
-
-$orderRepository =
-    new OrderRepository($pdo);
-
-$dailyBudgetService =
-    new DailyBudgetService();
-
-$budgetBalanceService =
-    new BudgetBalanceService(
-        $orderRepository,
-        $dailyBudgetService
-    );
-
-$orderCutoffService =
-    new OrderCutoffService();
+$dailyBudgetService = new DailyBudgetService();
+$orderCutoffService = new OrderCutoffService();
+$budgetBalanceService = new BudgetBalanceService(
+    $orderRepository,
+    $dailyBudgetService
+);
 
 $orderService = new OrderService(
     $groupRepository,
@@ -59,9 +47,7 @@ $orderService = new OrderService(
     $orderCutoffService
 );
 
-$group = $groupRepository->findById(
-    $groupId
-);
+$group = $groupRepository->findById($groupId);
 
 if ($group === null) {
     $groupSession->logout();
@@ -85,6 +71,12 @@ try {
         $groupId,
         $deliveryDate
     );
+
+    $budgetBalance = $budgetBalanceService->forDeliveryDate(
+        $settings,
+        $group,
+        $deliveryDate
+    );
 } catch (InvalidArgumentException) {
     http_response_code(404);
     exit('Liefertag nicht gefunden.');
@@ -96,18 +88,10 @@ try {
     exit;
 }
 
-$budgetBalance =
-    $budgetBalanceService->forDeliveryDate(
-        $settings,
-        $group,
-        $deliveryDate
-    );
-
-$cutoffStatus =
-    $orderCutoffService->getStatus(
-        $deliveryDate,
-        (string) $settings['order_cutoff_time']
-    );
+$cutoffStatus = $orderCutoffService->getStatus(
+    $deliveryDate,
+    (string) $settings['order_cutoff_time']
+);
 
 $error = null;
 
@@ -155,11 +139,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $deliveryDate
             );
 
-            $cutoffStatus =
-                $orderCutoffService->getStatus(
-                    $deliveryDate,
-                    (string) $settings['order_cutoff_time']
-                );
+            $budgetBalance = $budgetBalanceService->forDeliveryDate(
+                $settings,
+                $group,
+                $deliveryDate
+            );
+
+            $cutoffStatus = $orderCutoffService->getStatus(
+                $deliveryDate,
+                (string) $settings['order_cutoff_time']
+            );
         }
     }
 }

@@ -12,6 +12,14 @@ $root = dirname(__DIR__);
 $autoload = $root . '/vendor/autoload.php';
 $envFile = $root . '/.env';
 
+if (version_compare(PHP_VERSION, '8.3.0', '<')) {
+    fwrite(
+        STDERR,
+        'PHP >= 8.3 wird benötigt. Gefunden: ' . PHP_VERSION . PHP_EOL
+    );
+    exit(1);
+}
+
 if (!is_file($autoload)) {
     fwrite(
         STDERR,

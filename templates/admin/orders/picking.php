@@ -68,6 +68,15 @@ require dirname(__DIR__)
             Zurück zur Tagesauswertung
         </a>
 
+        <a
+            class="button button--secondary"
+            href="/admin/orders/picking-pdf.php?date=<?= $escape(
+                rawurlencode($deliveryDate)
+            ) ?>"
+        >
+            PDF herunterladen
+        </a>
+
         <button
             type="button"
             onclick="window.print()"
