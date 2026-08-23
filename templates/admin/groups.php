@@ -33,7 +33,6 @@ $escape = static function (mixed $value): string {
         Die Gruppe wurde erstellt.
     </p>
 <?php endif; ?>
-
 <?php if ($updated): ?>
     <p>
         Die Gruppe wurde aktualisiert.
@@ -44,6 +43,10 @@ $escape = static function (mixed $value): string {
     <a href="/admin/groups/create.php">
         Neue Gruppe erstellen
     </a>
+    |
+    <a href="/admin/budgets.php">
+        Tagesbudgets anzeigen
+    </a>
 </p>
 
 <?php if ($groups === []): ?>
@@ -53,7 +56,6 @@ $escape = static function (mixed $value): string {
     </p>
 
 <?php else: ?>
-
     <table>
         <thead>
             <tr>
@@ -72,7 +74,6 @@ $escape = static function (mixed $value): string {
         <tbody>
 
         <?php foreach ($groups as $group): ?>
-
             <tr>
                 <td>
                     <?= $escape($group['name']) ?>
@@ -89,7 +90,6 @@ $escape = static function (mixed $value): string {
                         $group['participants_week1_full']
                     ) ?>
                 </td>
-
                 <td>
                     <?= $escape(
                         $group['participants_week1_departure_half']
@@ -107,7 +107,6 @@ $escape = static function (mixed $value): string {
                         $group['participants_visitors']
                     ) ?>
                 </td>
-
                 <td>
                     <?= $escape(
                         $group['participants_week2_full']
@@ -119,7 +118,6 @@ $escape = static function (mixed $value): string {
                         $group['participants_week2_departure_half']
                     ) ?>
                 </td>
-
                 <td>
                     <a
                         href="/admin/groups/edit.php?id=<?= (int) $group['id'] ?>"
