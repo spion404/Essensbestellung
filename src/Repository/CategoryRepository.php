@@ -26,6 +26,34 @@ final class CategoryRepository
         return $statement->fetchAll();
     }
 
+    public function findProductCategoryIds(): array
+    {
+        $statement = $this->pdo->query(
+            'SELECT
+                product_id,
+                category_id
+            FROM product_categories
+            ORDER BY
+                product_id ASC,
+                category_id ASC'
+        );
+
+        $categoryIdsByProduct = [];
+
+        foreach ($statement->fetchAll() as $row) {
+            $productId = (int) $row['product_id'];
+
+            if (!isset($categoryIdsByProduct[$productId])) {
+                $categoryIdsByProduct[$productId] = [];
+            }
+
+            $categoryIdsByProduct[$productId][] =
+                (int) $row['category_id'];
+        }
+
+        return $categoryIdsByProduct;
+    }
+
     public function findIdByName(string $name): ?int
     {
         $statement = $this->pdo->prepare(

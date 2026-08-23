@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Database;
+use App\Repository\CategoryRepository;
 use App\Repository\GroupRepository;
 use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
@@ -27,6 +28,7 @@ $pdo = Database::connect();
 $groupRepository = new GroupRepository($pdo);
 $settingsRepository = new SettingsRepository($pdo);
 $productRepository = new ProductRepository($pdo);
+$categoryRepository = new CategoryRepository($pdo);
 $orderRepository = new OrderRepository($pdo);
 
 $dailyBudgetService = new DailyBudgetService();
@@ -214,6 +216,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $products = $productRepository->findAll();
+$categories = $categoryRepository->findAll();
+$productCategoryIds =
+    $categoryRepository->findProductCategoryIds();
 
 $saved =
     (string) ($_GET['saved'] ?? '') === '1';

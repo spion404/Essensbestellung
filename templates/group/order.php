@@ -86,6 +86,140 @@ $formatDate = static function (string $date): string {
     <title>
         Bestellung – <?= $escape($group['name']) ?>
     </title>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.45;
+            margin: 2rem auto;
+            max-width: 1200px;
+            padding: 0 1rem;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid #ccc;
+            padding: 0.65rem;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            white-space: nowrap;
+        }
+
+        .filters {
+            align-items: end;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1.5rem 0 1rem;
+        }
+
+        .filters label {
+            display: grid;
+            gap: 0.25rem;
+        }
+
+        .filters input[type="search"],
+        .filters select {
+            min-width: 15rem;
+            padding: 0.4rem;
+        }
+
+        .filters .checkbox-label {
+            align-items: center;
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .filter-status {
+            margin: 0.75rem 0;
+        }
+
+        .product-name {
+            font-weight: 600;
+        }
+
+        .product-meta {
+            color: #555;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .product-remark {
+            margin-top: 0.35rem;
+        }
+
+        .quantity-input {
+            box-sizing: border-box;
+            max-width: 8rem;
+            padding: 0.4rem;
+            width: 100%;
+        }
+
+        .line-total {
+            white-space: nowrap;
+        }
+
+        .order-summary {
+            border-top: 2px solid #333;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+        }
+
+        .order-summary dl {
+            display: grid;
+            gap: 0.4rem 1rem;
+            grid-template-columns: max-content max-content;
+        }
+
+        .order-summary dd {
+            margin: 0;
+            text-align: right;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .actions button {
+            padding: 0.6rem 0.9rem;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        @media (max-width: 760px) {
+            body {
+                margin-top: 1rem;
+            }
+
+            .filters {
+                align-items: stretch;
+                display: grid;
+            }
+
+            .filters input[type="search"],
+            .filters select {
+                min-width: 0;
+                width: 100%;
+            }
+
+            .product-table-wrapper {
+                overflow-x: auto;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -126,14 +260,17 @@ $formatDate = static function (string $date): string {
         Ganze Personen:
         <?= (int) $budgetDay['full_participants'] ?>
     </li>
+
     <li>
         Halbe Personen:
         <?= (int) $budgetDay['half_participants'] ?>
     </li>
+
     <li>
         Besucher:
         <?= (int) $budgetDay['visitor_participants'] ?>
     </li>
+
     <li>
         Tagesbudget:
         <strong>
@@ -168,6 +305,65 @@ $formatDate = static function (string $date): string {
 
 <?php else: ?>
 
+    <h3>Produkte</h3>
+
+    <div class="filters">
+        <label for="product-search">
+            Suche
+            <input
+                type="search"
+                id="product-search"
+                placeholder="Produkt, Artikelnummer, Bemerkung …"
+                autocomplete="off"
+            >
+        </label>
+
+        <label for="category-filter">
+            Kategorie
+            <select id="category-filter">
+                <option value="">
+                    Alle Kategorien
+                </option>
+
+                <?php foreach ($categories as $category): ?>
+                    <option
+                        value="<?= (int) $category['id'] ?>"
+                    >
+                        <?= $escape($category['name']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+
+        <label class="checkbox-label">
+            <input
+                type="checkbox"
+                id="selected-only"
+            >
+            Nur ausgewählte Produkte
+        </label>
+
+        <button
+            type="button"
+            id="reset-filters"
+        >
+            Filter zurücksetzen
+        </button>
+    </div>
+
+    <p
+        class="filter-status"
+        aria-live="polite"
+    >
+        Sichtbar:
+        <strong id="visible-product-count">
+            <?= count($products) ?>
+        </strong>
+        von <?= count($products) ?> Produkten
+        · Ausgewählt:
+        <strong id="selected-product-count">0</strong>
+    </p>
+
     <form
         method="post"
         action="/group/order.php?date=<?= $escape(
@@ -186,159 +382,229 @@ $formatDate = static function (string $date): string {
             value="<?= $escape($deliveryDate) ?>"
         >
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Produkt</th>
-                    <th>Kategorien</th>
-                    <th>Bemerkung</th>
-                    <th>Einheit</th>
-                    <th>Preis</th>
-                    <th>Menge</th>
-                </tr>
-            </thead>
+        <div class="product-table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produkt</th>
+                        <th>Details</th>
+                        <th>Preis</th>
+                        <th>Menge</th>
+                        <th>Positionswert</th>
+                    </tr>
+                </thead>
 
-            <tbody>
+                <tbody id="product-table-body">
 
-            <?php foreach ($products as $product): ?>
-                <?php
-                $productId =
-                    (string) (int) $product['id'];
+                <?php foreach ($products as $product): ?>
+                    <?php
+                    $productId = (int) $product['id'];
 
-                $quantity =
-                    $quantities[$productId]
-                    ?? '';
+                    $quantity =
+                        $quantities[(string) $productId]
+                        ?? '';
 
-                $priceCents = $moneyToCents(
-                    (string) $product['price']
-                );
-                ?>
+                    $priceCents = $moneyToCents(
+                        (string) $product['price']
+                    );
 
-                <tr>
-                    <td>
-                        <?= $escape($product['name']) ?>
+                    $categoryIds =
+                        $productCategoryIds[$productId]
+                        ?? [];
 
-                        <?php if (
-                            $product['article_number'] !== null
-                            && $product['article_number'] !== ''
-                        ): ?>
-                            <br>
-                            <small>
-                                Art.-Nr.
-                                <?= $escape(
-                                    $product['article_number']
-                                ) ?>
-                            </small>
-                        <?php endif; ?>
-                    </td>
+                    $searchParts = [
+                        $product['name'],
+                        $product['article_number'],
+                        $product['categories'],
+                        $product['remark'],
+                        $product['unit'],
+                    ];
 
-                    <td>
-                        <?php if (
-                            $product['categories'] === null
-                            || $product['categories'] === ''
-                        ): ?>
-                            –
-                        <?php else: ?>
+                    $searchText = implode(
+                        ' ',
+                        array_filter(
+                            array_map(
+                                static fn (mixed $value): string =>
+                                    trim((string) $value),
+                                $searchParts
+                            ),
+                            static fn (string $value): bool =>
+                                $value !== ''
+                        )
+                    );
+                    ?>
+
+                    <tr
+                        data-product-row
+                        data-search="<?= $escape($searchText) ?>"
+                        data-category-ids="<?= $escape(
+                            implode(',', $categoryIds)
+                        ) ?>"
+                    >
+                        <td>
+                            <div class="product-name">
+                                <?= $escape($product['name']) ?>
+                            </div>
+
+                            <?php if (
+                                $product['article_number'] !== null
+                                && $product['article_number'] !== ''
+                            ): ?>
+                                <div class="product-meta">
+                                    Art.-Nr.
+                                    <?= $escape(
+                                        $product['article_number']
+                                    ) ?>
+                                </div>
+                            <?php endif; ?>
+                        </td>
+
+                        <td>
+                            <?php if (
+                                $product['categories'] !== null
+                                && $product['categories'] !== ''
+                            ): ?>
+                                <div>
+                                    <strong>Kategorien:</strong>
+                                    <?= $escape(
+                                        $product['categories']
+                                    ) ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (
+                                $product['unit'] !== null
+                                && $product['unit'] !== ''
+                            ): ?>
+                                <div class="product-meta">
+                                    Einheit:
+                                    <?= $escape($product['unit']) ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (
+                                $product['remark'] !== null
+                                && $product['remark'] !== ''
+                            ): ?>
+                                <div class="product-remark">
+                                    <?= $escape($product['remark']) ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (
+                                (
+                                    $product['categories'] === null
+                                    || $product['categories'] === ''
+                                )
+                                && (
+                                    $product['unit'] === null
+                                    || $product['unit'] === ''
+                                )
+                                && (
+                                    $product['remark'] === null
+                                    || $product['remark'] === ''
+                                )
+                            ): ?>
+                                –
+                            <?php endif; ?>
+                        </td>
+
+                        <td>
                             <?= $escape(
-                                $product['categories']
+                                $formatPrice(
+                                    (string) $product['price']
+                                )
                             ) ?>
-                        <?php endif; ?>
-                    </td>
+                        </td>
 
-                    <td>
-                        <?php if (
-                            $product['remark'] === null
-                            || $product['remark'] === ''
-                        ): ?>
-                            –
-                        <?php else: ?>
-                            <?= $escape(
-                                $product['remark']
-                            ) ?>
-                        <?php endif; ?>
-                    </td>
+                        <td>
+                            <input
+                                class="quantity-input"
+                                type="number"
+                                name="quantities[<?= $productId ?>]"
+                                value="<?= $escape($quantity) ?>"
+                                min="0"
+                                step="0.001"
+                                inputmode="decimal"
+                                autocomplete="off"
+                                data-price-cents="<?= $priceCents ?>"
+                            >
+                        </td>
 
-                    <td>
-                        <?php if (
-                            $product['unit'] === null
-                            || $product['unit'] === ''
-                        ): ?>
-                            –
-                        <?php else: ?>
-                            <?= $escape(
-                                $product['unit']
-                            ) ?>
-                        <?php endif; ?>
-                    </td>
+                        <td
+                            class="line-total"
+                            data-line-total
+                        >
+                            CHF 0.00
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
 
-                    <td>
+                    <tr id="no-products-row" hidden>
+                        <td colspan="5">
+                            Keine Produkte entsprechen dem aktuellen Filter.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <section class="order-summary">
+            <h3>Budgetkontrolle</h3>
+
+            <dl>
+                <dt>Tagesbudget</dt>
+                <dd>
+                    <?= $escape(
+                        $formatMoney(
+                            (int) $budgetDay['budget_cents']
+                        )
+                    ) ?>
+                </dd>
+
+                <dt>Warenwert</dt>
+                <dd>
+                    <strong id="order-total">
+                        CHF 0.00
+                    </strong>
+                </dd>
+
+                <dt>Verbleibendes Tagesbudget</dt>
+                <dd>
+                    <strong id="remaining-budget">
                         <?= $escape(
-                            $formatPrice(
-                                (string) $product['price']
+                            $formatMoney(
+                                (int) $budgetDay['budget_cents']
                             )
                         ) ?>
-                    </td>
+                    </strong>
+                </dd>
+            </dl>
 
-                    <td>
-                        <input
-                            type="number"
-                            name="quantities[<?= (int) $product['id'] ?>]"
-                            value="<?= $escape($quantity) ?>"
-                            min="0"
-                            step="0.001"
-                            inputmode="decimal"
-                            data-price-cents="<?= $priceCents ?>"
-                        >
-                    </td>
-                </tr>
-            <?php endforeach; ?>
+            <p id="budget-warning" hidden>
+                <strong>
+                    Achtung: Das Tagesbudget wird überschritten.
+                </strong>
+            </p>
 
-            </tbody>
-        </table>
+            <div class="actions">
+                <button
+                    type="submit"
+                    name="action"
+                    value="save"
+                >
+                    Entwurf speichern
+                </button>
 
-        <h3>Budgetkontrolle</h3>
-
-        <p>
-            Warenwert:
-            <strong id="order-total">
-                CHF 0.00
-            </strong>
-        </p>
-
-        <p>
-            Verbleibendes Tagesbudget:
-            <strong id="remaining-budget">
-                <?= $escape(
-                    $formatMoney(
-                        (int) $budgetDay['budget_cents']
-                    )
-                ) ?>
-            </strong>
-        </p>
-
-        <p id="budget-warning" hidden>
-            <strong>
-                Achtung: Das Tagesbudget wird überschritten.
-            </strong>
-        </p>
-
-        <p>
-            <button
-                type="submit"
-                name="action"
-                value="save"
-            >
-                Entwurf speichern
-            </button>
-
-            <button
-                type="submit"
-                name="action"
-                value="review"
-            >
-                Bestellung prüfen
-            </button>
-        </p>
+                <button
+                    type="submit"
+                    name="action"
+                    value="review"
+                >
+                    Bestellung prüfen
+                </button>
+            </div>
+        </section>
     </form>
 
     <script>
@@ -346,9 +612,30 @@ $formatDate = static function (string $date): string {
             const budgetCents =
                 <?= (int) $budgetDay['budget_cents'] ?>;
 
-            const inputs = document.querySelectorAll(
-                'input[data-price-cents]'
-            );
+            const searchInput =
+                document.getElementById('product-search');
+
+            const categoryFilter =
+                document.getElementById('category-filter');
+
+            const selectedOnly =
+                document.getElementById('selected-only');
+
+            const resetFiltersButton =
+                document.getElementById('reset-filters');
+
+            const visibleCountElement =
+                document.getElementById(
+                    'visible-product-count'
+                );
+
+            const selectedCountElement =
+                document.getElementById(
+                    'selected-product-count'
+                );
+
+            const noProductsRow =
+                document.getElementById('no-products-row');
 
             const totalElement =
                 document.getElementById('order-total');
@@ -363,6 +650,18 @@ $formatDate = static function (string $date): string {
                     'budget-warning'
                 );
 
+            const rows = Array.from(
+                document.querySelectorAll(
+                    '[data-product-row]'
+                )
+            );
+
+            const inputs = rows.map(
+                (row) => row.querySelector(
+                    'input[data-price-cents]'
+                )
+            );
+
             const formatter = new Intl.NumberFormat(
                 'de-CH',
                 {
@@ -373,28 +672,69 @@ $formatDate = static function (string $date): string {
                 }
             );
 
+            const normalizeText = (value) => {
+                return String(value || '')
+                    .trim()
+                    .toLocaleLowerCase('de-CH');
+            };
+
+            const getQuantity = (input) => {
+                const value = Number(
+                    String(input.value || '')
+                        .replace(',', '.')
+                );
+
+                if (
+                    !Number.isFinite(value)
+                    || value <= 0
+                ) {
+                    return 0;
+                }
+
+                return value;
+            };
+
+            const getLineTotalCents = (input) => {
+                const priceCents = Number(
+                    input.dataset.priceCents
+                );
+
+                const quantity = getQuantity(input);
+
+                if (
+                    !Number.isFinite(priceCents)
+                    || quantity <= 0
+                ) {
+                    return 0;
+                }
+
+                return Math.round(
+                    priceCents * quantity
+                );
+            };
+
+            const updateLineTotal = (input) => {
+                const row = input.closest(
+                    '[data-product-row]'
+                );
+
+                const lineTotalElement =
+                    row.querySelector(
+                        '[data-line-total]'
+                    );
+
+                lineTotalElement.textContent =
+                    formatter.format(
+                        getLineTotalCents(input) / 100
+                    );
+            };
+
             const updateBudget = () => {
                 let totalCents = 0;
 
                 inputs.forEach((input) => {
-                    const priceCents = Number(
-                        input.dataset.priceCents
-                    );
-
-                    const quantity = Number(
-                        input.value || 0
-                    );
-
-                    if (
-                        !Number.isFinite(quantity)
-                        || quantity <= 0
-                    ) {
-                        return;
-                    }
-
-                    totalCents += Math.round(
-                        priceCents * quantity
-                    );
+                    totalCents +=
+                        getLineTotalCents(input);
                 });
 
                 const remainingCents =
@@ -414,14 +754,126 @@ $formatDate = static function (string $date): string {
                     remainingCents >= 0;
             };
 
+            const updateSelectedCount = () => {
+                const selectedCount = inputs.filter(
+                    (input) => getQuantity(input) > 0
+                ).length;
+
+                selectedCountElement.textContent =
+                    String(selectedCount);
+            };
+
+            const updateFilters = () => {
+                const searchTerm = normalizeText(
+                    searchInput.value
+                );
+
+                const selectedCategory =
+                    categoryFilter.value;
+
+                let visibleCount = 0;
+
+                rows.forEach((row) => {
+                    const input = row.querySelector(
+                        'input[data-price-cents]'
+                    );
+
+                    const searchText = normalizeText(
+                        row.dataset.search
+                    );
+
+                    const categoryIds = String(
+                        row.dataset.categoryIds || ''
+                    )
+                        .split(',')
+                        .filter(Boolean);
+
+                    const matchesSearch =
+                        searchTerm === ''
+                        || searchText.includes(
+                            searchTerm
+                        );
+
+                    const matchesCategory =
+                        selectedCategory === ''
+                        || categoryIds.includes(
+                            selectedCategory
+                        );
+
+                    const matchesSelection =
+                        !selectedOnly.checked
+                        || getQuantity(input) > 0;
+
+                    const visible =
+                        matchesSearch
+                        && matchesCategory
+                        && matchesSelection;
+
+                    row.hidden = !visible;
+
+                    if (visible) {
+                        visibleCount += 1;
+                    }
+                });
+
+                visibleCountElement.textContent =
+                    String(visibleCount);
+
+                noProductsRow.hidden =
+                    visibleCount !== 0;
+            };
+
             inputs.forEach((input) => {
+                updateLineTotal(input);
+
                 input.addEventListener(
                     'input',
-                    updateBudget
+                    () => {
+                        updateLineTotal(input);
+                        updateBudget();
+                        updateSelectedCount();
+                    }
+                );
+
+                input.addEventListener(
+                    'change',
+                    () => {
+                        if (selectedOnly.checked) {
+                            updateFilters();
+                        }
+                    }
                 );
             });
 
+            searchInput.addEventListener(
+                'input',
+                updateFilters
+            );
+
+            categoryFilter.addEventListener(
+                'change',
+                updateFilters
+            );
+
+            selectedOnly.addEventListener(
+                'change',
+                updateFilters
+            );
+
+            resetFiltersButton.addEventListener(
+                'click',
+                () => {
+                    searchInput.value = '';
+                    categoryFilter.value = '';
+                    selectedOnly.checked = false;
+                    updateFilters();
+                    searchInput.focus();
+                }
+            );
+
             updateBudget();
+            updateSelectedCount();
+            updateFilters();
         })();
     </script>
 
